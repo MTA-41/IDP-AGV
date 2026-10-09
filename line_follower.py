@@ -34,6 +34,7 @@ kd = 1.0
 def PID_line_follow(read):
 
     diff = read #INPUT FROM SENSOR AS SHOULD BE ZERO-ISH FROM BLACK
+    differences.append(diff)
 
     #past.append(diff)
 
