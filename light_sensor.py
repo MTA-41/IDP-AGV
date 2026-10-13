@@ -1,19 +1,20 @@
 from machine import Pin, PWM, ADC
 from utime import sleep
+import dht, time
 
 # INSERT LIGHT SENSOR INITIATION
 
-right = ADC(24)
+right = Pin(25, Pin.IN)
 
 for i in range(100):
-    print(right)
+    print(right.value())
     sleep(0.5)
 
-def reading():
+# def reading():
 
-    diff = right - left
-    variable  = front + back + diff
+#     diff = right - left
+#     variable  = front + back + diff
 
-    if variable != 2:
-        if diff = 1:
-            return
+#     if variable != 2:
+#         if diff == 1:
+#             pass
