@@ -19,14 +19,20 @@ back Pin(21, Pin.IN)
 
 def line_follow():
 
-    while right == 0 and left == 0 and front == 1 and back == 1:
-        STRAIGHT ONE
+    go = True
+    while go == True:
 
-    elif lightsensor1 > value:
-        left wheel turns more
+        if right == 0 and left == 0 and front == 1 and back == 1:
+            move_forward()
 
-    elif lightsensor2 < value:
-        right wheel turns More 
+        elif right == 1 and left == 0 and front == 1 and back == 1:
+            turn_right()
+
+        elif right == 0 and left == 1 and front == 1 and back == 1:
+            turn_left()
+
+        elif right == 0 and left == 0 and front == 0 or back == 0:
+            break
 
 
 

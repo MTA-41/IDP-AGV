@@ -40,4 +40,13 @@ def turn_right(motor_left, motor_right, duration):
     sleep(duration)
 
 def actuate_grab():
-    pass
+    #set PWM
+    pwm = PWM(Pin(21)) 
+    pwm.freq(50) #20ms PWM period
+
+    print("RIGHT")
+    pwm.duty_ns(2050000) #dutyCycle 2ms
+    time.sleep(1)
+
+
+actuate_grab()
