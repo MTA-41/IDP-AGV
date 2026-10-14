@@ -1,4 +1,4 @@
-from machine import Pin, PWM, ADC
+from machine import Pin, PWM
 from utime import sleep
 
 class Motor:
@@ -23,19 +23,20 @@ class Motor:
 def create_motors():
     left_motor = Motor(dirPin=4, PWMPin=5)  # Motor is controlled from Motor Driv2 #1, which is on GP4/5
     right_motor = Motor(dirPin=4, PWMPin=5) #change pins for operation
+    return(left_motor, right_motor)
 
 def move_forward(motor_left, motor_right, duration):
     #parameter being a negative value will go back.
-    motor_left.forward()
-    motor_right.forward()
+    motor_left.Forward()
+    motor_right.Forward()
     sleep(duration)
 
 def turn_left(motor_left, motor_right, duration):
-    motor_right.forward()
+    motor_right.Forward()
     sleep(duration)
 
 def turn_right(motor_left, motor_right, duration):
-    motor_left.forward()
+    motor_left.Forward()
     sleep(duration)
 
 def actuate_grab():
