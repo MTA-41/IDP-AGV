@@ -38,7 +38,7 @@ def turn_right(motor_left, motor_right, duration):
     motor_left.Forward()
     sleep(duration)
 
-def move_forward(motor_left, motor_right, duration):
+def move_back(motor_left, motor_right, duration):
     motor_left.Reverse()
     motor_right.Reverse()
     sleep(duration)
