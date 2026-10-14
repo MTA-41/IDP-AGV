@@ -34,19 +34,6 @@ def turn_right(motor_left, motor_right, duration):
     motor_left.Forward()
     sleep(duration)
 
-<<<<<<< HEAD:movement_functions.py
-def actuate_grab():
-    #set PWM
-    pwm = PWM(Pin(21)) 
-    pwm.freq(50) #20ms PWM period
-
-    print("RIGHT")
-    pwm.duty_ns(2050000) #dutyCycle 2ms
-    time.sleep(1)
-
-
-actuate_grab()
-=======
 def move_back(motor_left, motor_right, duration):
     motor_left.Reverse()
     motor_right.Reverse()
@@ -67,4 +54,3 @@ back_light_sensor = Pin(21, Pin.IN)
 
 left_motor = Motor(dirPin=4, PWMPin=5)
 right_motor = Motor(dirPin=4, PWMPin=5)
->>>>>>> aa504c53caba7ff96f1af93063e03ee3b0f1008b:initialise_components

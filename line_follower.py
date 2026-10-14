@@ -2,8 +2,7 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
-from movement_functions import turn_left, turn_right, move_forward
-from light_sensor import reading
+from initialise_components import *
 from machine import Pin, PWM, ADC
 
 
@@ -19,20 +18,14 @@ back_light_sensor = Pin(21, Pin.IN)
 
 def line_follow():
 
-    go = True
-    while go == True:
+    while right == 0 and left == 0 and front == 1 and back == 1:
+        STRAIGHT ONE
 
-        if right == 0 and left == 0 and front == 1 and back == 1:
-            move_forward()
+    elif lightsensor1 > value:
+        left wheel turns more
 
-        elif right == 1 and left == 0 and front == 1 and back == 1:
-            turn_right()
-
-        elif right == 0 and left == 1 and front == 1 and back == 1:
-            turn_left()
-
-        elif right == 0 and left == 0 and front == 0 or back == 0:
-            break
+    elif lightsensor2 < value:
+        right wheel turns More 
 
 
 
