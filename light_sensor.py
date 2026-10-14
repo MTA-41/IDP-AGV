@@ -5,19 +5,13 @@ import dht, time
 # INSERT LIGHT SENSOR INITIATION
 # 18,19,20,21 GPIO numbers
 
+right = Pin(18, Pin.IN),
+left = Pin(19, Pin.IN),
+forward = Pin(20, Pin.IN),
+backward = Pin(21, Pin.IN), 
 
 for i in range(100):
-    right = Pin(18, Pin.IN)
     print(right.value())
     sleep(0.5)
 
-#right = ADC(Pin(24))
-
-# def reading():
-
-#     diff = right - left
-#     variable  = front + back + diff
-
-#     if variable != 2:
-#         if diff == 1:
-#             pass
+sensor_values = [right.value(), left.value(), forward.value(), backward.value()]
