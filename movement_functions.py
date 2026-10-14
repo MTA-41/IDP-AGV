@@ -26,7 +26,6 @@ def create_motors():
     return(left_motor, right_motor)
 
 def move_forward(motor_left, motor_right, duration):
-    #parameter being a negative value will go back.
     motor_left.Forward()
     motor_right.Forward()
     sleep(duration)
@@ -37,6 +36,11 @@ def turn_left(motor_left, motor_right, duration):
 
 def turn_right(motor_left, motor_right, duration):
     motor_left.Forward()
+    sleep(duration)
+
+def move_forward(motor_left, motor_right, duration):
+    motor_left.Reverse()
+    motor_right.Reverse()
     sleep(duration)
 
 def actuate_grab():
