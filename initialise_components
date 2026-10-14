@@ -1,6 +1,7 @@
-from machine import Pin, PWM
-from utime import sleep
+from machine import Pin, PWM, ADC
+from time import *
 
+#############  motor functions  ###########################
 class Motor:
     def __init__(self, dirPin, PWMPin):
         self.mDir = Pin(dirPin, Pin.OUT)  # set motor direction pin
@@ -20,11 +21,6 @@ class Motor:
         self.pwm.duty_u16(int(65535 * speed / 100))
 
 
-def create_motors():
-    left_motor = Motor(dirPin=4, PWMPin=5)  # Motor is controlled from Motor Driv2 #1, which is on GP4/5
-    right_motor = Motor(dirPin=4, PWMPin=5) #change pins for operation
-    return(left_motor, right_motor)
-
 def move_forward(motor_left, motor_right, duration):
     motor_left.Forward()
     motor_right.Forward()
@@ -43,5 +39,18 @@ def move_back(motor_left, motor_right, duration):
     motor_right.Reverse()
     sleep(duration)
 
-def actuate_grab():
-    pass
+############  light sensor function  #######################
+def get_light_values(forward, backward, left, right):
+    sensor_values = [right.value(), left.value(), forward.value(), backward.value()]
+    return sensor_values
+
+
+###########.  component declaration. #########################
+
+right_light_sensor = Pin(18, Pin.IN)
+left_light_sensor = Pin(19, Pin.IN)
+front_light_sensor = Pin(20, Pin.IN)
+back_light_sensor = Pin(21, Pin.IN)
+
+left_motor = Motor(dirPin=4, PWMPin=5)
+right_motor = Motor(dirPin=4, PWMPin=5)
