@@ -7,10 +7,10 @@ from light_sensor import reading
 from machine import Pin, PWM, ADC
 
 
-right = Pin(18, Pin.IN)
-left = Pin(19, Pin.IN)
-front = Pin(20, Pin.IN)
-back Pin(21, Pin.IN)
+right_light_sensor = Pin(18, Pin.IN)
+left_light_sensor = Pin(19, Pin.IN)
+front_light_sensor = Pin(20, Pin.IN)
+back_light_sensor = Pin(21, Pin.IN)
 
 
 # while loop occurs in main loop to ensure it keeps going - this is for one 'step'
