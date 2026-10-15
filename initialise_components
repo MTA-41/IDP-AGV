@@ -48,8 +48,8 @@ def get_light_values(forward, backward, left, right):
 ###########.  component declaration. #########################
 
 right_light_sensor = Pin(18, Pin.IN)
-left_light_sensor = Pin(19, Pin.IN)
-front_light_sensor = Pin(20, Pin.IN)
+left_light_sensor = Pin(20, Pin.IN)
+front_light_sensor = Pin(19, Pin.IN)
 back_light_sensor = Pin(21, Pin.IN)
 
 left_motor = Motor(dirPin=4, PWMPin=5)
