@@ -86,7 +86,7 @@ right_motor = Motor(dirPin=4, PWMPin=5)
 
 
 
-
+home = False
 
 
 
@@ -95,6 +95,9 @@ def line_follow():
     global junction_num
     junction_num = 0
     go = True
+
+    
+
     while go == True:
 
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
@@ -112,8 +115,21 @@ def line_follow():
             turn_left(left_motor, right_motor, 0.001) 
 
         elif right == 0 and left == 1 and front == 1 and junction_num != 2:
-            print('jun')
+            print('JUNCTION')
             return True
+
+        elif right == 0 and left == 0 and front == 0:
+            print('DELIVERY')
+            move_back(left_motor, right_motor, 0.5)
+            rotateacw90(left_motor, right_motor)
+            rotateacw90(left_motor, right_motor)
+            junction_num += 1
+
+
+        elif right == 0 and left == 1 and front == 0: ## COUNTER REQUIRED TO MAKE SURE CORNER RECOGNISED OVER BOX COLLECTION JUNCTIONS
+            print('RETURN JUNCTION')
+            turn_left(left_motor, right_motor, 0.001)
+
 
 
 def junction_handling():
@@ -133,6 +149,14 @@ def junction_handling():
             
             rotatecw90(left_motor, right_motor)
             junction_num += 1
+
+
+        if junction_num == 4:
+            home = True
+
+        if junction_num >= 5:
+            move_forward(left_motor, right_motor, 0.1)
+
 
 while True:
     line_follow()
