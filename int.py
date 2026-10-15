@@ -126,38 +126,36 @@ def line_follow():
             junction_num += 1
 
 
-        elif right == 0 and left == 1 and front == 0: ## COUNTER REQUIRED TO MAKE SURE CORNER RECOGNISED OVER BOX COLLECTION JUNCTIONS
-            print('RETURN JUNCTION')
-            turn_left(left_motor, right_motor, 0.001)
-
-
-
 def junction_handling():
-        if junction_num == 3:
-            move_forward(left_motor, right_motor, 0.1)
-        else:
-            turn_left(left_motor, right_motor, 1)
-
-
-        if junction_num == 2:
-            rotateacw90(left_motor, right_motor)
-            
+    if junction_num == 2:
+        rotateacw90(left_motor, right_motor)
+        print("entering depot")
         
-            move_forward(left_motor, right_motor, 0.7)
-            
-            move_back(left_motor, right_motor, 0.7)
-            
-            rotatecw90(left_motor, right_motor)
-            junction_num += 1
+    if junction_num == 3: 
+        rotateacw90(left_motor, right_motor)
+        rotateacw90(left_motor, right_motor)
+        print("u turn")
 
+    if junction_num == 4:
+        rotateacw90(left_motor, right_motor)
+        print("back on track")
 
-        if junction_num == 4:
-            home = True
+    if junction_num >= 5:
+        move_forward(left_motor, right_motor, 0.1)
+        print("ignore depot")
 
-        if junction_num >= 5:
-            move_forward(left_motor, right_motor, 0.1)
+    if junction_num >= 6:
+        rotateacw90(left_motor, right_motor, 0.1)
+        print("enter delivery")
 
+    if junction_num >= 7:
+        move_forward(left_motor, right_motor, 0.1)
+        print("enter delivery")
 
+    if junction_num >= 8:
+        move_forward(left_motor, right_motor, 0.1)
+        print("enter delivery")
+        
 while True:
     line_follow()
     junction_num += 1
