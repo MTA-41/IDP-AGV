@@ -16,7 +16,7 @@ class Motor:
         self.mDir.value(0)                     # forward = 0 reverse = 1 motor
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
 
-    def Reverse(self, speed=30):
+    def Reverse(self, speed=100):
         self.mDir.value(1)
         self.pwm.duty_u16(int(65535 * speed / 100))
 
@@ -25,21 +25,46 @@ def move_forward(motor_left, motor_right, duration):
     motor_left.Forward()
     motor_right.Forward()
     sleep(duration)
+    
 
 def turn_left(motor_left, motor_right, duration):
     motor_left.off()
     motor_right.Forward()
     sleep(duration)
+    
 
 def turn_right(motor_left, motor_right, duration):
     motor_right.off()
     motor_left.Forward()
     sleep(duration)
+    
 
 def move_back(motor_left, motor_right, duration):
     motor_left.Reverse()
     motor_right.Reverse()
     sleep(duration)
+    
+
+def rotateacw90(motor_left, motor_right, duration=2.00):
+    motor_right.off()
+    motor_left.off()
+    motor_left.Reverse()
+    print('rl')
+    motor_right.Forward()
+    print('rr')
+    motor_right.off()
+    motor_left.off()
+
+def rotatecw90(motor_left, motor_right, duration=2.00):
+    motor_right.off()
+    motor_left.off()
+    motor_left.Forward()
+    print('rl')
+    motor_right.Reverse()
+    print('rr')
+    
+    motor_right.off()
+    motor_left.off()
 
 ############  light sensor function  #######################
 def get_light_values(forward, backward, left, right):
@@ -64,10 +89,10 @@ right_motor = Motor(dirPin=4, PWMPin=5)
 
 
 
-junction_num = 0
+
 
 def line_follow():
-
+    junction_num = 0
     go = True
     while go == True:
 
@@ -85,7 +110,7 @@ def line_follow():
             print('l')
             turn_left(left_motor, right_motor, 0.001) 
 
-        elif right == 0 and left == 1 and front == 1:
+        elif right == 0 and left == 1 and front == 1 and junction_num != 2:
             print('jun')
             junction_num +=1
             if junction_num == 3:
@@ -95,9 +120,15 @@ def line_follow():
 
 
         if junction_num == 2:
-            move_forward(left_motor, right_motor, 1)
-            move_back(left_motor, right_motor, 1)
-            turn_right(left_motor, right_motor, 1)
+            rotateacw90(left_motor, right_motor)
+            
+        
+            move_forward(left_motor, right_motor, 0.7)
+            
+            move_back(left_motor, right_motor, 0.7)
+            
+            rotatecw90(left_motor, right_motor)
+            junction_num += 1
 
 
 
