@@ -62,6 +62,10 @@ right_motor = Motor(dirPin=4, PWMPin=5)
 
 
 
+
+
+junction_num = 0
+
 def line_follow():
 
     go = True
@@ -83,7 +87,14 @@ def line_follow():
 
         elif right == 0 and left == 1 and front == 1:
             print('jun')
+            junction_num +=1
             turn_left(left_motor, right_motor, 1)
+
+
+        if junction_num == 2:
+            move_forward(left_motor, right_motor, 1)
+            move_back(left_motor, right_motor, 1)
+            turn_right(left_motor, right_motor, 1)
 
 
 
