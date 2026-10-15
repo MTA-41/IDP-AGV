@@ -12,7 +12,7 @@ class Motor:
     def off(self):
         self.pwm.duty_u16(0)
         
-    def Forward(self, speed=30):
+    def Forward(self, speed=100):
         self.mDir.value(0)                     # forward = 0 reverse = 1 motor
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
 
@@ -27,10 +27,12 @@ def move_forward(motor_left, motor_right, duration):
     sleep(duration)
 
 def turn_left(motor_left, motor_right, duration):
+    motor_left.off()
     motor_right.Forward()
     sleep(duration)
 
 def turn_right(motor_left, motor_right, duration):
+    motor_right.off()
     motor_left.Forward()
     sleep(duration)
 
@@ -69,19 +71,19 @@ def line_follow():
 
         if right == 0 and left == 0 and front == 1:
             print('f')
-            move_forward(left_motor, right_motor, 0.05)
+            move_forward(left_motor, right_motor, 0.001)
 
         elif right == 1 and left == 0 and front == 0:
             print('r')
-            turn_right(left_motor, right_motor, 0.5)
+            turn_right(left_motor, right_motor, 0.001)
 
         elif right == 0 and left == 1 and front == 0:
             print('l')
-            turn_left(left_motor, right_motor, 0.5) 
+            turn_left(left_motor, right_motor, 0.001) 
 
         elif right == 0 and left == 1 and front == 1:
             print('jun')
-            turn_left(left_motor, right_motor, 10)
+            turn_left(left_motor, right_motor, 1)
 
 
 
