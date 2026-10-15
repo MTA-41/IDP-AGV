@@ -1,8 +1,8 @@
 #import servo and motor unit codes
-import numpy as np
+#import numpy as np
 import time
-import matplotlib.pyplot as plt
-from initialise_components import *
+#import matplotlib.pyplot as plt
+from int import *
 from machine import Pin, PWM, ADC
 
 
