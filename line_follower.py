@@ -14,8 +14,7 @@ from machine import Pin, PWM, ADC
 
 motion_log = []
 at_junction = Falserunning = True
-state = "home"
-nxt_state = "get_parcel"
+state = "return_home"
 curr_node = None
 nxt_node = None
 prev_node = None
@@ -91,7 +90,18 @@ def junction_motion(current, next):
 
     finally:
         at_junction = False
-     
+
+depots = [3, 5, 20, 22]
+storage = [7, 9, 11, 13, 15, 17, 24, 26, 28, 30, 32, 34, 37, 40, 43, 46, 49, 52, 38, 41, 44, 47, 50, 53]
+
+def check_state(curr, target): 
+    if target in depots:
+        state = "get_parcel"
+    elif target in storage:
+        tate = 'delivery'
+    elif target == 0:
+        state = "return_home"
+
 line_follow()
 
     

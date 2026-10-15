@@ -1,7 +1,7 @@
 #from line_follower import line_follow
 from initialise_components import *
 from track_mapping import *
-from line_follower import line_follow
+from line_follower import *
 
 
 #assumptions while coding, th line follower function returns true when a junction is detected. 
@@ -10,7 +10,7 @@ from line_follower import line_follow
 while running:
     if state == "home":
         curr_junction = 0
-    if state == "home" and nxt_state == "get_[arcel":
+    if state == "get_parcel":
         target = 3
     while not end:
         if line_follow():

@@ -92,6 +92,7 @@ right_motor = Motor(dirPin=4, PWMPin=5)
 
 
 def line_follow():
+    global junction_num
     junction_num = 0
     go = True
     while go == True:
@@ -112,11 +113,14 @@ def line_follow():
 
         elif right == 0 and left == 1 and front == 1 and junction_num != 2:
             print('jun')
-            junction_num +=1
-            if junction_num == 3:
-                move_forward(left_motor, right_motor, 0.1)
-            else:
-                turn_left(left_motor, right_motor, 1)
+            return True
+
+
+def junction_handling():
+        if junction_num == 3:
+            move_forward(left_motor, right_motor, 0.1)
+        else:
+            turn_left(left_motor, right_motor, 1)
 
 
         if junction_num == 2:
@@ -130,7 +134,8 @@ def line_follow():
             rotatecw90(left_motor, right_motor)
             junction_num += 1
 
-
-
-line_follow()
+while True:
+    line_follow()
+    junction_num += 1
+    junction_handling()
 
