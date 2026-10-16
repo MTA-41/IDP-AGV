@@ -91,7 +91,19 @@ right_motor = Motor(dirPin=4, PWMPin=5)
  
  
 home = False
- 
+BOX_CONFIRM = 3         # all-three-sensors pattern must be seen this many reads in a row
+
+box_armed = True        # False after a box has been handled, until the sensors clear it
+box_reads = 0           # consecutive reads of the all-on pattern
+
+
+def u_turn():
+    # same sequence your junction 3 handler uses
+    move_back(left_motor, right_motor, 0.6)
+    rotateacw90(left_motor, right_motor)
+    move_back(left_motor, right_motor, 0.6)
+    rotateacw90(left_motor, right_motor)
+
 # ---------------- junction debounce settings (counted in sensor reads) ----------------
 JUNCTION_CONFIRM = 3    # junction pattern must be seen this many reads IN A ROW to count
 JUNCTION_CLEAR = 20     # pattern must be ABSENT this many reads before another junction can count
@@ -106,53 +118,66 @@ clear_reads = 0         # consecutive reads WITHOUT the junction pattern
  
 def line_follow():
     global junction_num, junction_armed, junction_reads, clear_reads
+    global box_armed, box_reads
     go = True
- 
+
     while go == True:
- 
+
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
- 
+
         on_junction = (right == 0 and left == 1 and front == 1)
         on_box = (right == 1 and left == 1 and front == 1)
- 
-        # ----- debounce bookkeeping -----
-        if on_junction or on_box:
+
+        # ----- debounce bookkeeping (separate counters for each pattern) -----
+        if on_junction:
             junction_reads += 1
-            clear_reads = 0
         else:
             junction_reads = 0
+
+        if on_box:
+            box_reads += 1
+        else:
+            box_reads = 0
+
+        if on_junction or on_box:
+            clear_reads = 0
+        else:
             clear_reads += 1
             if clear_reads >= JUNCTION_CLEAR:
-                junction_armed = True       # fully off the last junction: next one can count
- 
+                junction_armed = True       # fully clear: both latches reset
+                box_armed = True
+
+        # ----- driving -----
         if right == 0 and left == 0 and front == 1:
             print('f')
             move_forward(left_motor, right_motor, 0.001)
- 
+
         elif right == 1 and left == 0 and front == 0:
             print('r')
             turn_right(left_motor, right_motor, 0.001)
- 
+
         elif right == 0 and left == 1 and front == 0:
             print('l')
-            turn_left(left_motor, right_motor, 0.001) 
- 
+            turn_left(left_motor, right_motor, 0.001)
+
         elif on_junction:
             if junction_armed and junction_reads >= JUNCTION_CONFIRM:
                 print('JUNCTION')
-                junction_armed = False      # won't count again until the sensors clear it
+                junction_armed = False
                 return True
-            # still approaching / still sitting on a junction that's already been
-            # counted: keep rolling forward instead of leaving the last command running
             move_forward(left_motor, right_motor, 0.001)
- 
-        # elif right == 0 and left == 0 and front == 0:
-        #     print('DELIVERY')
-        #     move_back(left_motor, right_motor, 0.5)
-        #     rotateacw90(left_motor, right_motor)
-        #     rotateacw90(left_motor, right_motor)
- 
- 
+
+        elif on_box:
+            if box_armed and box_reads >= BOX_CONFIRM:
+                print('BOX - 180')
+                u_turn()                    # no return, so junction_num is not incremented
+                box_armed = False           # don't re-trigger while still on the box
+                junction_armed = False      # and don't count the box edge as a junction
+                clear_reads = 0
+            else:
+                move_forward(left_motor, right_motor, 0.001)   # keep driving onto the box
+
+                
 def junction_handling():
 
     if junction_num == 1:
