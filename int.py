@@ -45,7 +45,7 @@ def move_back(motor_left, motor_right, duration):
     sleep(duration)
     
  
-def rotateacw90(motor_left, motor_right, duration=0.80):
+def rotateacw90(motor_left, motor_right, duration=0.60):
     motor_right.off()
     motor_left.off()
     move_forward(motor_left, motor_right, 0.6)
@@ -59,7 +59,7 @@ def rotateacw90(motor_left, motor_right, duration=0.80):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.80):
+def rotatecw90(motor_left, motor_right, duration=0.60):
     motor_right.off()
     motor_left.off()
     move_forward(motor_left, motor_right, 0.6)
@@ -165,7 +165,9 @@ def junction_handling():
         print("entering depot")
  
     elif junction_num == 3:
+        move_back(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
+        move_back(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
         print("u turn")
  
