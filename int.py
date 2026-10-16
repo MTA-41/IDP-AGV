@@ -45,7 +45,10 @@ def move_back(motor_left, motor_right, duration):
     sleep(duration)
     
  
-def rotateacw90(motor_left, motor_right, duration=2.00):
+def rotateacw90(motor_left, motor_right, duration=0.80):
+    motor_right.off()
+    motor_left.off()
+    move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
     motor_left.Reverse()
@@ -56,7 +59,10 @@ def rotateacw90(motor_left, motor_right, duration=2.00):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=2.00):
+def rotatecw90(motor_left, motor_right, duration=0.80):
+    motor_right.off()
+    motor_left.off()
+    move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
     motor_left.Forward()
@@ -107,9 +113,10 @@ def line_follow():
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
  
         on_junction = (right == 0 and left == 1 and front == 1)
+        on_box = (right == 1 and left == 1 and front == 1)
  
         # ----- debounce bookkeeping -----
-        if on_junction:
+        if on_junction or on_box:
             junction_reads += 1
             clear_reads = 0
         else:
@@ -139,14 +146,18 @@ def line_follow():
             # counted: keep rolling forward instead of leaving the last command running
             move_forward(left_motor, right_motor, 0.001)
  
-        elif right == 0 and left == 0 and front == 0:
-            print('DELIVERY')
-            move_back(left_motor, right_motor, 0.5)
-            rotateacw90(left_motor, right_motor)
-            rotateacw90(left_motor, right_motor)
+        # elif right == 0 and left == 0 and front == 0:
+        #     print('DELIVERY')
+        #     move_back(left_motor, right_motor, 0.5)
+        #     rotateacw90(left_motor, right_motor)
+        #     rotateacw90(left_motor, right_motor)
  
  
 def junction_handling():
+
+    if junction_num == 1:
+        turn_left(left_motor, right_motor, 0.9)
+
     # CHANGED: this was a chain of separate ifs with >=, so once junction_num
     # reached 5+ every later case fired as well. Now one case per junction.
     if junction_num == 2:
