@@ -87,13 +87,13 @@ right_motor = Motor(dirPin=4, PWMPin=5)
 
 
 home = False
-
+global junction_num
+junction_num = 0
 
 
 
 def line_follow():
-    global junction_num
-    junction_num = 0
+    
     go = True
 
     
@@ -103,30 +103,36 @@ def line_follow():
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
 
         if right == 0 and left == 0 and front == 1:
-            print('f')
+            #print('f')
             move_forward(left_motor, right_motor, 0.001)
 
         elif right == 1 and left == 0 and front == 0:
-            print('r')
+            #print('r')
             turn_right(left_motor, right_motor, 0.001)
 
         elif right == 0 and left == 1 and front == 0:
-            print('l')
+            #print('l')
             turn_left(left_motor, right_motor, 0.001) 
 
-        elif right == 0 and left == 1 and front == 1 and junction_num != 2:
+        elif right == 0 and left == 1 and front == 1:
             print('JUNCTION')
-            return True
+            return False
 
-        elif right == 0 and left == 0 and front == 0:
-            print('DELIVERY')
-            move_back(left_motor, right_motor, 0.5)
-            rotateacw90(left_motor, right_motor)
-            rotateacw90(left_motor, right_motor)
-            junction_num += 1
+        # elif right == 0 and left == 0 and front == 0 and junction_num == 3:
+        #     print('DELIVERY')
+        #     move_back(left_motor, right_motor, 0.5)
+        #     rotateacw90(left_motor, right_motor)
+        #     rotateacw90(left_motor, right_motor)
+        #     junction_num += 1
 
 
 def junction_handling():
+
+    if junction_num == 1:
+        turn_left(left_motor, right_motor, 0.01)
+        print('first corner')
+        sleep(0.7)
+
     if junction_num == 2:
         rotateacw90(left_motor, right_motor)
         print("entering depot")
@@ -140,19 +146,19 @@ def junction_handling():
         rotateacw90(left_motor, right_motor)
         print("back on track")
 
-    if junction_num >= 5:
+    if junction_num == 5:
         move_forward(left_motor, right_motor, 0.1)
         print("ignore depot")
 
-    if junction_num >= 6:
+    if junction_num == 6:
         rotateacw90(left_motor, right_motor, 0.1)
         print("enter delivery")
 
-    if junction_num >= 7:
+    if junction_num == 7:
         move_forward(left_motor, right_motor, 0.1)
         print("enter delivery")
 
-    if junction_num >= 8:
+    if junction_num == 8:
         move_forward(left_motor, right_motor, 0.1)
         print("enter delivery")
         
