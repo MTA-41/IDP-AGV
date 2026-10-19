@@ -52,9 +52,9 @@ def rotateacw90(motor_left, motor_right, duration=0.60):
     motor_left.off()
     motor_right.off()
     motor_right.Forward()
-    print('rr')
+    #print('rr')
     motor_left.Reverse()
-    print('rl')
+    #print('rl')
     sleep(duration)                 # CHANGED: the rotation never waited, so it never turned
     motor_right.off()
     motor_left.off()
@@ -118,14 +118,19 @@ junction_reads = 0      # consecutive reads of the junction pattern
 clear_reads = 0         # consecutive reads WITHOUT the junction pattern
 button_flag = False
 
+DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
+delivery_deadline = None    # None = no delivery timer running
+
 
  
 def line_follow():
-    get_button_flag()
+    #get_button_flag()
     global junction_num, junction_armed, junction_reads, clear_reads
     global box_armed, box_reads
+    global delivery_deadline
 
     if junction_num == 0:
+        sleep(6)
         rotatecw90(left_motor, right_motor)
         move_forward(left_motor, right_motor, 0.5)
 
@@ -135,7 +140,7 @@ def line_follow():
 
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
  
-        on_junction = (right == 0 and left == 1 and front == 1)
+        on_junction = ((right == 0 and left == 1 and front == 1) or (right == 1 and left == 0 and front == 1))
         on_box = (right == 1 and left == 1 and front == 1)
  
         # ----- debounce bookkeeping -----
@@ -159,23 +164,29 @@ def line_follow():
 
         # ----- driving -----
         if right == 0 and left == 0 and front == 1:
-            print('f')
+            #print('f')
             move_forward(left_motor, right_motor, 0.001)
 
         elif right == 1 and left == 0 and front == 0:
-            print('r')
+            #print('r')
             turn_right(left_motor, right_motor, 0.001)
 
         elif right == 0 and left == 1 and front == 0:
-            print('l')
+            #print('l')
             turn_left(left_motor, right_motor, 0.001)
 
         elif on_junction:
             if junction_armed and junction_reads >= JUNCTION_CONFIRM:
-                print('JUNCTION')
+                #print('JUNCTION')
                 junction_armed = False
                 return True
             move_forward(left_motor, right_motor, 0.001)
+
+        if delivery_deadline is not None and ticks_diff(ticks_ms(), delivery_deadline) >= 0:
+            delivery_deadline = None
+        #print('DELIVERY U-TURN')
+            rotateacw90(left_motor, right_motor)
+            rotateacw90(left_motor, right_motor)
  
         # elif right == 0 and left == 0 and front == 0:
         #     print('DELIVERY')
@@ -185,6 +196,7 @@ def line_follow():
  
  
 def junction_handling():
+    global delivery_deadline
 
     if junction_num == 1:
         turn_left(left_motor, right_motor, 0.9)
@@ -196,7 +208,7 @@ def junction_handling():
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
-        print(f"entering depot: {junction_num}")
+        #print(f"entering depot: {junction_num}")
  
     elif junction_num == 3:
         left_motor.off()
@@ -210,61 +222,67 @@ def junction_handling():
         rotateacw90(left_motor, right_motor)
         #move_back(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
-        print(f"u turn: {junction_num}")
+        #print(f"u turn: {junction_num}")
  
     elif junction_num == 4:
         right_motor.off()
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
-        print(f"back on track: {junction_num}")
+        #print(f"back on track: {junction_num}")
  
     elif junction_num == 5:
         move_forward(left_motor, right_motor, 0.1)
-        print("ignore depot")
+        #print("ignore depot")
  
     elif junction_num == 6:
         right_motor.off()
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
-        print(f"enter delivery: {junction_num}")
+        delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
+        #print(f"enter delivery: {junction_num}")
         
  
     elif junction_num == 7:
         # NOTE: 7 is the delivery dead end, counted inside line_follow, so this never runs
         turn_right(left_motor, right_motor, 0.9)
-        print(f"enter delivery: {junction_num}")
+        #print(f"enter delivery: {junction_num}")
  
     elif junction_num == 8:
         move_forward(left_motor, right_motor, 0.3)
-        print(f"enter delivery: {junction_num}")
+        #print(f"enter delivery: {junction_num}")
 
 
     elif junction_num == 9:
         move_forward(left_motor, right_motor, 0.3)
-        print(f"enter delivery: {junction_num}")
+        #print(f"enter delivery: {junction_num}")
 
     elif junction_num == 10:
         turn_right(left_motor, right_motor, 0.9)
         print(f"last corner: {junction_num}")
 
-    elif junction_num == 11:
+    elif junction_num >= 11:
+        print('home')
         move_forward(left_motor, right_motor, 1)
         right_motor.off()
         left_motor.off()
+        sleep(100)
 
-def get_button_flag():
-    if button.value() == 1:
-        if button_flag == False:
-            button_flag = True 
-        if button_flag== True:
-            button_flag = False 
+
+
+
+# def get_button_flag():
+#     if button.value() == 1:
+#         if button_flag == False:
+#             button_flag = True 
+#         if button_flag== True:
+#             button_flag = False 
                         
 while True:
-    if button_flag:
-        line_follow()
-        junction_num += 1
-        junction_handling()
-        get_button_flag()
-        print (button_flag)
+    #if button_flag:
+    line_follow()
+    junction_num += 1
+    junction_handling()
+    #get_button_flag()
+    #print (button_flag)
