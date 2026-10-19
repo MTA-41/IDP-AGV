@@ -198,6 +198,7 @@ def line_follow():
  
  
 def junction_handling():
+    global delivery_deadline
 
     if junction_num == 1:
         turn_left(left_motor, right_motor, 0.9)
@@ -263,7 +264,7 @@ def junction_handling():
         turn_right(left_motor, right_motor, 0.9)
         print(f"last corner: {junction_num}")
 
-    elif junction_num == 11:
+    elif junction_num >= 11:
         move_forward(left_motor, right_motor, 1)
         right_motor.off()
         left_motor.off()
