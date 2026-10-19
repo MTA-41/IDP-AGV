@@ -121,6 +121,11 @@ clear_reads = 0         # consecutive reads WITHOUT the junction pattern
 def line_follow():
     global junction_num, junction_armed, junction_reads, clear_reads
     global box_armed, box_reads
+
+    if junction_num == 0:
+        rotatecw90(left_motor, right_motor)
+        move_forward(left_motor, right_motor, 0.5)
+
     go = True
  
     while go == True:
