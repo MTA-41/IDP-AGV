@@ -88,6 +88,11 @@ back_light_sensor = Pin(21, Pin.IN)
  
 left_motor = Motor(dirPin=7, PWMPin=6)
 right_motor = Motor(dirPin=4, PWMPin=5)
+
+DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
+delivery_deadline = None    # None = no delivery timer running
+
+
  
  
 home = False
@@ -156,15 +161,15 @@ def line_follow():
 
         # ----- driving -----
         if right == 0 and left == 0 and front == 1:
-            print('f')
+            #print('f')
             move_forward(left_motor, right_motor, 0.001)
 
         elif right == 1 and left == 0 and front == 0:
-            print('r')
+            #print('r')
             turn_right(left_motor, right_motor, 0.001)
 
         elif right == 0 and left == 1 and front == 0:
-            print('l')
+            #print('l')
             turn_left(left_motor, right_motor, 0.001)
 
         elif on_junction:
@@ -173,6 +178,17 @@ def line_follow():
                 junction_armed = False
                 return True
             move_forward(left_motor, right_motor, 0.001)
+
+
+        global delivery_deadline   # add alongside your other global lines at the top of the function
+
+        # ----- delivery timer: u-turn so we don't hit the box -----
+        if delivery_deadline is not None and ticks_diff(ticks_ms(), delivery_deadline) >= 0:
+            delivery_deadline = None
+            print('Delivery U-Turn')
+            
+            rotateacw90(left_motor, right_motor)
+            rotateacw90(left_motor, right_motor)
  
         # elif right == 0 and left == 0 and front == 0:
         #     print('DELIVERY')
@@ -225,6 +241,7 @@ def junction_handling():
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
+        delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
         print(f"enter delivery: {junction_num}")
         
  
