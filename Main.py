@@ -122,6 +122,17 @@ DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6
 delivery_deadline = None    # None = no delivery timer running
 
 
+
+###### OPERATION FUNCTIONS ######
+right = True   # if true, robot operates on right side of board
+grab = False
+box_present = False  # false if no box in loading bay
+filled_bay = False # false if loading bay is full
+
+
+
+
+
  
 def line_follow():
     #get_button_flag()
