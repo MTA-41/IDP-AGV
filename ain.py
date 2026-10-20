@@ -99,28 +99,15 @@ BOX_CONFIRM = 3         # all-three-sensors pattern must be seen this many reads
 box_armed = True        # False after a box has been handled, until the sensors clear it
 box_reads = 0           # consecutive reads of the all-on pattern
 
-
-
-
+curr_node = 9
+imminent_next_node = 0
+target = 0
 
 ###### OPERATION FUNCTIONS ######
 right = True   # if true, robot operates on right side of board
 grab = False
 box_present = False  # false if no box in loading bay
 filled_bay = False # false if loading bay is full
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #state machine for robot will be coded later
 
@@ -233,9 +220,10 @@ def next_direction(graph, current, target):
 
 def u_turn():
     # same sequence your junction 3 handler uses
-    move_back(left_motor, right_motor, 0.6)
+    left_motor.off()
+    right_motor.off()
+    move_back(left_motor, right_motor, 0.5)
     rotateacw90(left_motor, right_motor)
-    move_back(left_motor, right_motor, 0.6)
     rotateacw90(left_motor, right_motor)
 
 # ---------------- junction debounce settings (counted in sensor reads) ----------------
@@ -252,7 +240,7 @@ button_flag = False
 
 DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
 delivery_deadline = None    # None = no delivery timer running
-
+states = ["to depot", "delivering", "returning home", "idle"]
 
  
 def line_follow():
@@ -261,10 +249,10 @@ def line_follow():
     global box_armed, box_reads
     global delivery_deadline
 
-    if junction_num == 0:
-        sleep(6)
-        rotatecw90(left_motor, right_motor)
-        move_forward(left_motor, right_motor, 0.5)
+    # if junction_num == 0:
+    #     sleep(6)
+    #     rotatecw90(left_motor, right_motor)
+    #     move_forward(left_motor, right_motor, 0.5)
 
     go = True
  
@@ -328,78 +316,79 @@ def line_follow():
  
  
 def junction_handling():
-    global delivery_deadline
 
-    if junction_num == 1:
-        turn_left(left_motor, right_motor, 0.9)
+    # global delivery_deadline
 
-    # CHANGED: this was a chain of separate ifs with >=, so once junction_num
-    # reached 5+ every later case fired as well. Now one case per junction.
-    if junction_num == 2:
-        right_motor.off()
-        left_motor.off()
-        move_forward(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        #print(f"entering depot: {junction_num}")
+    # if junction_num == 1:
+    #     turn_left(left_motor, right_motor, 0.9)
+
+    # # CHANGED: this was a chain of separate ifs with >=, so once junction_num
+    # # reached 5+ every later case fired as well. Now one case per junction.
+    # if junction_num == 2:
+    #     right_motor.off()
+    #     left_motor.off()
+    #     move_forward(left_motor, right_motor, 0.6)
+    #     rotateacw90(left_motor, right_motor)
+    #     #print(f"entering depot: {junction_num}")
  
-    elif junction_num == 3:
-        left_motor.off()
-        right_motor.off()
-        sleep(2)
-        move_forward(left_motor, right_motor, 0.6)
-        left_motor.off()
-        right_motor.off()
-        sleep(5)
-        #move_back(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        #move_back(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        #print(f"u turn: {junction_num}")
+    # elif junction_num == 3:
+    #     left_motor.off()
+    #     right_motor.off()
+    #     sleep(2)
+    #     move_forward(left_motor, right_motor, 0.6)
+    #     left_motor.off()
+    #     right_motor.off()
+    #     sleep(5)
+    #     #move_back(left_motor, right_motor, 0.6)
+    #     rotateacw90(left_motor, right_motor)
+    #     #move_back(left_motor, right_motor, 0.6)
+    #     rotateacw90(left_motor, right_motor)
+    #     #print(f"u turn: {junction_num}")
  
-    elif junction_num == 4:
-        right_motor.off()
-        left_motor.off()
-        move_forward(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        #print(f"back on track: {junction_num}")
+    # elif junction_num == 4:
+    #     right_motor.off()
+    #     left_motor.off()
+    #     move_forward(left_motor, right_motor, 0.6)
+    #     rotateacw90(left_motor, right_motor)
+    #     #print(f"back on track: {junction_num}")
  
-    elif junction_num == 5:
-        move_forward(left_motor, right_motor, 0.1)
-        #print("ignore depot")
+    # elif junction_num == 5:
+    #     move_forward(left_motor, right_motor, 0.1)
+    #     #print("ignore depot")
  
-    elif junction_num == 6:
-        right_motor.off()
-        left_motor.off()
-        move_forward(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
-        delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
-        #print(f"enter delivery: {junction_num}")
+    # elif junction_num == 6:
+    #     right_motor.off()
+    #     left_motor.off()
+    #     move_forward(left_motor, right_motor, 0.6)
+    #     rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
+    #     delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
+    #     #print(f"enter delivery: {junction_num}")
         
  
-    elif junction_num == 7:
-        # NOTE: 7 is the delivery dead end, counted inside line_follow, so this never runs
-        turn_right(left_motor, right_motor, 0.9)
-        #print(f"enter delivery: {junction_num}")
+    # elif junction_num == 7:
+    #     # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
+    #     turn_right(left_motor, right_motor, 0.9)
+    #     #print(f"enter delivery: {junction_num}")
  
-    elif junction_num == 8:
-        move_forward(left_motor, right_motor, 0.3)
-        #print(f"enter delivery: {junction_num}")
+    # elif junction_num == 8:
+    #     move_forward(left_motor, right_motor, 0.3)
+    #     #print(f"enter delivery: {junction_num}")
 
 
-    elif junction_num == 9:
-        move_forward(left_motor, right_motor, 0.3)
-        #print(f"enter delivery: {junction_num}")
+    # elif junction_num == 9:
+    #     move_forward(left_motor, right_motor, 0.3)
+    #     #print(f"enter delivery: {junction_num}")
 
-    elif junction_num == 10:
-        turn_right(left_motor, right_motor, 0.9)
-        print(f"last corner: {junction_num}")
+    # elif junction_num == 10:
+    #     turn_right(left_motor, right_motor, 0.9)
+    #     print(f"last corner: {junction_num}")
 
-    elif junction_num >= 11:
-        print('home')
-        move_forward(left_motor, right_motor, 1)
-        right_motor.off()
-        left_motor.off()
-        sleep(100)
+    # elif junction_num >= 11:
+    #     print('home')
+    #     move_forward(left_motor, right_motor, 1)
+    #     right_motor.off()
+    #     left_motor.off()
+    #     sleep(100)
 
 
 
