@@ -99,7 +99,31 @@ BOX_CONFIRM = 3         # all-three-sensors pattern must be seen this many reads
 box_armed = True        # False after a box has been handled, until the sensors clear it
 box_reads = 0           # consecutive reads of the all-on pattern
 
+
+
+
+
+###### OPERATION FUNCTIONS ######
+right = True   # if true, robot operates on right side of board
+grab = False
+box_present = False  # false if no box in loading bay
+filled_bay = False # false if loading bay is full
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #state machine for robot will be coded later
+
 
 forward, backward, left, right = "forward", "backward", "left", "right"
 curr_node = 0
