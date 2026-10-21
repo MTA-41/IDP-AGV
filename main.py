@@ -113,7 +113,6 @@ filled_bay = False # false if loading bay is full
 
 
 forward, backward, left, right = "forward", "backward", "left", "right"
-curr_node = 0
 
 board_graph = {
     # start box
@@ -232,7 +231,6 @@ JUNCTION_CLEAR = 20     # pattern must be ABSENT this many reads before another 
  
 # CHANGED: these live at module level now. junction_num used to be reset to 0
 # at the top of every line_follow() call, so it never counted past 1.
-junction_num = 0
 junction_armed = True   # False from the moment a junction is reported until the sensors clear it
 junction_reads = 0      # consecutive reads of the junction pattern
 clear_reads = 0         # consecutive reads WITHOUT the junction pattern
@@ -241,6 +239,7 @@ button_flag = False
 DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
 delivery_deadline = None    # None = no delivery timer running
 states = ["to depot", "delivering", "returning home", "idle"]
+state = "to depot"
 storage = [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
  
 def line_follow():
@@ -316,7 +315,11 @@ def line_follow():
  
  
 def junction_handling():
-
+    curr_node = imminent_next_node
+    if state == "to depot":
+        target = next_depot
+        imminent_next_node = next_node(board_graph, curr_node, target)
+        
     # global delivery_deadline
 
     # if junction_num == 1:
@@ -531,6 +534,7 @@ while True:
 
 
 
+
 ### servo initialisation ###
 
 class Servo:
@@ -569,6 +573,8 @@ class Servo:
  
        duty = int(Servo.MIN_DUTY + (angle / 270) * (Servo.MAX_DUTY - Servo.MIN_DUTY))
        self.servo.duty_u16(duty)
+
+
 
 
 
@@ -1220,4 +1226,30 @@ class VL53L0X:
         return True
 
 
+
+def test_vl53l0x():
+    # config I2C Bus
+    i2c_bus = I2C(id=0, sda=Pin(8), scl=Pin(9)) # I2C0 on GP8 & GP9
+    print(i2c_bus.scan())  # Get the address (nb 41=0x29, 82=0x52)
+    
+    # Setup vl53l0 object
+    vl53l0 = VL53L0X(i2c_bus)
+    vl53l0.set_Vcsel_pulse_period(vl53l0.vcsel_period_type[0], 18)
+    vl53l0.set_Vcsel_pulse_period(vl53l0.vcsel_period_type[1], 14)
+
+
+    while True:
+        print("Starting vl53l0...")
+
+        # Start device
+        vl53l0.start()
+
+        # Read ten samples
+        for _ in range(10):
+            distance = vl53l0.read()
+            print(f"Distance = {distance}mm")  # Check calibration!
+            sleep(0.5)
+        
+        # Stop device
+        vl53l0.stop()
 
