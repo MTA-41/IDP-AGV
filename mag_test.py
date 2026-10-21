@@ -5,7 +5,7 @@ from time import sleep
 class DRV5055:
     """Read the analogue output of a DRV5055 on a Raspberry Pi Pico ADC pin."""
 
-    def __init__(self, pin=26, zero_field=32768, deadband=500):
+    def __init__(self, pin=26, zero_field=41600, deadband=1000):
         # GP26 is ADC0 on the Pico. Change pin to 27 or 28 if wired to ADC1/ADC2.
         self.output = ADC(Pin(pin))
         # The DRV5055 output is approximately half its supply with no magnetic
