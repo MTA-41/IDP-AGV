@@ -241,7 +241,7 @@ button_flag = False
 DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
 delivery_deadline = None    # None = no delivery timer running
 states = ["to depot", "delivering", "returning home", "idle"]
-
+storage = [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
  
 def line_follow():
     #get_button_flag()
