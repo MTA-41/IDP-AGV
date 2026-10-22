@@ -364,9 +364,37 @@ def scan_grab():
             grab_in()
             sleep(0.5)
             arm_up30()
+            scan = False
 
         else:
             scan = True
+            line_follow_step()
+
+
+
+def scan_drop():
+    arm_down()
+    grab_in()
+    print('Scanning for box')
+    scan = True
+
+
+
+### DISTANCE TO BOX ###
+    while scan == True:
+        distance = get_distance()
+        if distance <= 40:
+            right_motor.off()
+            left_motor.off()
+            arm_down()
+            sleep(1)
+            move_forward(left_motor, right_motor, 0.6)
+            grab_out30()
+            move_back(left_motor, right_motor, 0.8)
+            arm_up90()
+            scan = False
+
+        else:
             line_follow_step()
 
 
@@ -424,7 +452,14 @@ def junction_handling():
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
-        delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
+        
+        scan_drop()
+        junction_num += 1
+        
+        
+        
+        
+        #delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
         #print(f"enter delivery: {junction_num}")
         
  
@@ -502,7 +537,7 @@ def arm_up90():
 
 
 
-servo_grab = Servo(Pin(XXXX))
+servo_grab = Servo(Pin(13))
 
 def grab_in():
 
