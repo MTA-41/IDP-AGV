@@ -259,6 +259,17 @@ def line_follow():
  
     while go == True:
 
+        flash = 0
+### LIGHT FLASH ###
+        if amber.off() is True and flash >= 500:
+            amber.on()
+            flash = 0
+        elif amber.on() is True and flash >= 500:
+            amber.off()
+            flash = 0
+
+
+
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
  
         on_junction = ((right == 0 and left == 1 and front == 1) or (right == 1 and left == 0 and front == 1))
@@ -315,7 +326,51 @@ def line_follow():
         #     rotateacw90(left_motor, right_motor)
         #     rotateacw90(left_motor, right_motor)
  
- 
+
+def line_follow_step():
+    # ----- driving -----
+    if right == 0 and left == 0 and front == 1:
+    #print('f')
+    move_forward(left_motor, right_motor, 0.001)
+    
+    elif right == 1 and left == 0 and front == 0:
+    #print('r')
+    turn_right(left_motor, right_motor, 0.001)
+    
+    elif right == 0 and left == 1 and front == 0:
+    #print('l')
+    turn_left(left_motor, right_motor, 0.001)
+
+
+def scan_grab():
+    arm_down()
+    grab_in()
+    print('Scanning for box')
+    scan = True
+
+
+
+### DISTANCE TO BOX ###
+    while scan == True:
+        distance = get_distance()
+        if distance <= 40:
+            right_motor.off()
+            left_motor.off()
+            arm_up90()
+            grab_out60()
+            move_forward(left_motor, right_motor, 0.6)
+            arm_down()
+            sleep(1)
+            grab_in()
+            sleep(0.5)
+            arm_up30()
+
+        else:
+            scan = True
+            line_follow_step()
+
+
+
 def junction_handling():
     #if state == "to depot":
 
@@ -331,7 +386,13 @@ def junction_handling():
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
-        #print(f"entering depot: {junction_num}")
+        print(f"entering depot: {junction_num}")
+
+        scan_grab()
+        junction_num += 1
+
+
+
  
     elif junction_num == 3:
         left_motor.off()
@@ -411,7 +472,7 @@ def get_distance():
         
     distance = vl53l0.read()
     
-    print(f"Distance = {distance}mm")  # Check calibration!
+    #print(f"Distance = {distance}mm")  # Check calibration!
         
         # Stop device
     vl53l0.stop()
@@ -421,16 +482,61 @@ def get_distance():
 
 servo1 = Servo(Pin(15)) # Connected to Servo 1
   
-def grabber_down():
+def arm_down():
 
     print("Move to 0°")
     servo1.set_angle(0)
 
  
-def grabber_up():
+def arm_up30():
 
     print("Move to 30°")
     servo1.set_angle(30)
+
+
+def arm_up90():
+
+    print("Move to 90°")
+    servo1.set_angle(90)
+
+
+
+
+servo_grab = Servo(Pin(XXXX))
+
+def grab_in():
+
+    print("Grab Move to 0°")
+    servo1.set_angle(90)
+
+def grab_out30():
+
+    print("Grab Move to 30°")
+    servo1.set_angle(30)
+
+def grab_out60():
+
+    print("Grab Move to 60°")
+    servo1.set_angle(60)
+
+
+
+#### AMBER FLASHING CONCURRENTLY ###
+amber_timer = Timer()
+
+def flash_amber(timer):
+    amber.led.toggle()
+
+def start_amber_flash():
+    amber_timer.init(
+        period=500,
+        mode=Timer.PERIODIC,
+        callback=flash_amber
+    )
+
+def stop_amber_flash():
+    amber_timer.deinit()
+    amber.off()
 
 
 
@@ -442,28 +548,17 @@ amber = amber(pin = 8)
 red = red(pin = 8)
 green = green(pin = 8)
 
-amber_timer = Timer()
-
-def flash_amber(timer):
-    amber.led.toggle()
-
-def start_amber_flash():
-    amber_timer.init(period=500, mode=Timer.PERIODIC, callback=flash_amber)
-
-def stop_amber_flash():
-    amber_timer.deinit()
-    amber.off()
-
-start_amber_flash()
-
 button = Button(Pin = 17)
 clicks = 0
 if button.was_clicked:
     clicks+=1
-                        
+
+
+
+
 while go = True:
     if clicks == 1:
-
+        start_amber_flash()
         line_follow()
         junction_num += 1
         junction_handling()
@@ -471,7 +566,7 @@ while go = True:
     if clicks >= 2:
         right_motor.off()
         left_motor.off()
-
+        stop_amber_flash()
         go = False
 
 
