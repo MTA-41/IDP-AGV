@@ -117,11 +117,11 @@ forward, backward, left, right = "forward", "backward", "left", "right"
 board_graph = {
     # start box
     0:  {forward: 35,   backward: None, left: 18,   right: 1},
-    18: {forward: 19,   backward: 0,    left: None, right: None},
-    1:  {forward: 2,    backward: 0,    left: None, right: None},
+    18: {forward: 55,   backward: 0,    left: None, right: None},
+    1:  {forward: 54,    backward: 0,    left: None, right: None},
 
     # right wall (heading up, branches go left)
-    2:  {forward: 4,    backward: 1,  left: 3,    right: None},
+    2:  {forward: 4,    backward: 54,  left: 3,    right: None},
     3:  {forward: None, backward: 2,  left: None, right: None},
     4:  {forward: 6,    backward: 2,  left: 5,    right: None},
     5:  {forward: None, backward: 4,  left: None, right: None},
@@ -139,7 +139,7 @@ board_graph = {
     17: {forward: None, backward: 16, left: None, right: None},
 
     # left wall (heading up, branches go right)
-    19: {forward: 21,   backward: 18, left: None, right: 20},
+    19: {forward: 21,   backward: 55, left: None, right: 20},
     20: {forward: None, backward: 19, left: None, right: None},
     21: {forward: 23,   backward: 19, left: None, right: 22},
     22: {forward: None, backward: 21, left: None, right: None},
@@ -176,6 +176,8 @@ board_graph = {
     51: {forward: None, backward: 48, left: 52,   right: 53},
     52: {forward: None, backward: 51, left: None, right: None},
     53: {forward: None, backward: 51, left: None, right: None},
+    54: {forward: None, backward: 1, left: 2, right: None},
+    55: {forward: None, backward: 18, left: None, right: 19}
 }
 
 def find_path(graph, curr_node, target):
@@ -254,10 +256,11 @@ current_depot = 0       # zero-based index; depot 1 is the initial depot
 delivery_cursor = 0     # next storage cell to inspect
 active_delivery = None  # (depot_index, storage_index, node)
 
+DEPOT_NODES = [3, 5, 20, 22] 
 
 def next_depot():
     """Return the current depot number, cycling 1 -> 2 -> 3 -> 4 -> 1."""
-    return current_depot + 1
+    return DEPOT_NODES[current_depot + 1]
 
 
 def depot_collected():
@@ -302,9 +305,10 @@ def delivery_completed():
     storage[depot_index][storage_index] = 1
     active_delivery = None
     return True
+    
 def line_follow():
     #get_button_flag()
-    global junction_num, junction_armed, junction_reads, clear_reads
+    global junction_armed, junction_reads, clear_reads
     global box_armed, box_reads
     global delivery_deadline
 
@@ -331,6 +335,7 @@ def line_follow():
         if on_box:
             box_reads += 1
         else:
+
             box_reads = 0
 
         if on_junction or on_box:
@@ -367,121 +372,55 @@ def line_follow():
             rotateacw90(left_motor, right_motor)
             rotateacw90(left_motor, right_motor)
  
-        # elif right == 0 and left == 0 and front == 0:
-        #     print('DELIVERY')
-        #     move_back(left_motor, right_motor, 0.5)
-        #     rotateacw90(left_motor, right_motor)
-        #     rotateacw90(left_motor, right_motor)
+        elif right == 0 and left == 0 and front == 0 and curr_node >= 7:
+            print('DELIVERY')
+            left_motor.off()
+            right_motor.off()
+            junction_handling()
  
 def update_state_machine():
+    global state
     if state == "to depot":
         state = "delivery"
-    if state == "delivery":
+    elif state == "delivery":
         state = "to home"
-    if state == "to home":
+    elif state == "to home":
         state = "to depot"
 
-def next_depot():
-    pass
-def next_delivery_bay():
-    pass
 
 def junction_handling():
     global curr_node, imminent_next_node, target, state
     curr_node = imminent_next_node
     if state == "to depot":
-        target = next_depot
-    if state == "delivery":
-        target = next_delivery_bay
-    if state == "to home":
+        target = next_depot()
+    elif state == "delivery":
+        depot_collected()
+        target = next_delivery_bay()
+    elif state == "to home":
         target = 0
 
     imminent_next_node = next_node(board_graph, curr_node, target)
     direction_to_go = next_direction(board_graph, curr_node, target)
     if imminent_next_node == None or direction_to_go == None:
         update_state_machine()
+        
+    if state == "to home":
+        if direction_to_go == 'backward':
+            direction_to_go = 'forward'
+        elif direction_to_go == 'left':
+            direction_to_go = 'right'
+        elif direction_to_go == 'right':
+            direction_to_go = 'left'
+
+
     if direction_to_go == 'forward':
         move_forward(left_motor, right_motor, 0.01)
     if direction_to_go == 'left':
         rotateacw90(left_motor, right_motor)
-    if direction_to_go == 'left':
-        rotateacw90(left_motor, right_motor)
+    if direction_to_go == 'right':
+        rotatecw90(left_motor, right_motor)
     if direction_to_go == 'backward':
         u_turn(left_motor, right_motor)
-
-        
-    # global delivery_deadline
-
-    # if junction_num == 1:
-    #     turn_left(left_motor, right_motor, 0.9)
-
-    # # CHANGED: this was a chain of separate ifs with >=, so once junction_num
-    # # reached 5+ every later case fired as well. Now one case per junction.
-    # if junction_num == 2:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"entering depot: {junction_num}")
- 
-    # elif junction_num == 3:
-    #     left_motor.off()
-    #     right_motor.off()
-    #     sleep(2)
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     left_motor.off()
-    #     right_motor.off()
-    #     sleep(5)
-    #     #move_back(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #move_back(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"u turn: {junction_num}")
- 
-    # elif junction_num == 4:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"back on track: {junction_num}")
- 
-    # elif junction_num == 5:
-    #     move_forward(left_motor, right_motor, 0.1)
-    #     #print("ignore depot")
- 
-    # elif junction_num == 6:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
-    #     delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
-    #     #print(f"enter delivery: {junction_num}")
-        
- 
-    # elif junction_num == 7:
-    #     # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
-    #     turn_right(left_motor, right_motor, 0.9)
-    #     #print(f"enter delivery: {junction_num}")
- 
-    # elif junction_num == 8:
-    #     move_forward(left_motor, right_motor, 0.3)
-    #     #print(f"enter delivery: {junction_num}")
-
-
-    # elif junction_num == 9:
-    #     move_forward(left_motor, right_motor, 0.3)
-    #     #print(f"enter delivery: {junction_num}")
-
-    # elif junction_num == 10:
-    #     turn_right(left_motor, right_motor, 0.9)
-    #     print(f"last corner: {junction_num}")
-
-    # elif junction_num >= 11:
-    #     print('home')
-    #     move_forward(left_motor, right_motor, 1)
-    #     right_motor.off()
-    #     left_motor.off()
-    #     sleep(100)
 
 
 def get_distance():
@@ -534,7 +473,6 @@ def grabber_up():
 while True:
     #if button_flag:
     line_follow()
-    junction_num += 1
     junction_handling()
     #get_button_flag()
     #print (button_flag)
