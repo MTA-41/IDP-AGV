@@ -259,14 +259,7 @@ def line_follow():
  
     while go == True:
 
-        flash = 0
-### LIGHT FLASH ###
-        if amber.off() is True and flash >= 500:
-            amber.on()
-            flash = 0
-        elif amber.on() is True and flash >= 500:
-            amber.off()
-            flash = 0
+
 
 
 
@@ -328,18 +321,20 @@ def line_follow():
  
 
 def line_follow_step():
+    right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
+     
     # ----- driving -----
     if right == 0 and left == 0 and front == 1:
     #print('f')
-    move_forward(left_motor, right_motor, 0.001)
+        move_forward(left_motor, right_motor, 0.001)
     
     elif right == 1 and left == 0 and front == 0:
     #print('r')
-    turn_right(left_motor, right_motor, 0.001)
+        turn_right(left_motor, right_motor, 0.001)
     
     elif right == 0 and left == 1 and front == 0:
     #print('l')
-    turn_left(left_motor, right_motor, 0.001)
+        turn_left(left_motor, right_motor, 0.001)
 
 
 def scan_grab():
@@ -542,17 +537,17 @@ servo_grab = Servo(Pin(13))
 def grab_in():
 
     print("Grab Move to 0°")
-    servo1.set_angle(90)
+    servo_grab.set_angle(90)
 
 def grab_out30():
 
     print("Grab Move to 30°")
-    servo1.set_angle(30)
+    servo_grab.set_angle(30)
 
 def grab_out60():
 
     print("Grab Move to 60°")
-    servo1.set_angle(60)
+    servo_grab.set_angle(60)
 
 
 
