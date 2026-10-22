@@ -1,4 +1,4 @@
-from machine import Pin, PWM, ADC
+from machine import Pin, PWM, ADC, Timer
 from time import *
 from collections import deque
  
@@ -259,17 +259,6 @@ def line_follow():
  
     while go == True:
 
-        flash = 0
-### LIGHT FLASH ###
-        if amber.off() is True and flash >= 500:
-            amber.on()
-            flash = 0
-        elif amber.on() is True and flash >= 500:
-            amber.off()
-            flash = 0
-
-
-
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
  
         on_junction = ((right == 0 and left == 1 and front == 1) or (right == 1 and left == 0 and front == 1))
@@ -452,6 +441,20 @@ def grabber_up():
 amber = amber(pin = 8)
 red = red(pin = 8)
 green = green(pin = 8)
+
+amber_timer = Timer()
+
+def flash_amber(timer):
+    amber.led.toggle()
+
+def start_amber_flash():
+    amber_timer.init(period=500, mode=Timer.PERIODIC, callback=flash_amber)
+
+def stop_amber_flash():
+    amber_timer.deinit()
+    amber.off()
+
+start_amber_flash()
 
 button = Button(Pin = 17)
 clicks = 0
