@@ -217,7 +217,7 @@ def next_direction(graph, current, target):
         if neighbour == nxt:
             return direction
 
-def u_turn():
+def u_turn(left_motor, right_motor):
     # same sequence your junction 3 handler uses
     left_motor.off()
     right_motor.off()
@@ -238,10 +238,70 @@ button_flag = False
 
 DELIVERY_FOLLOW_MS = 1500   # TUNE: how long to follow the line after junction 6 before turning back
 delivery_deadline = None    # None = no delivery timer running
-states = ["to depot", "delivering", "returning home", "idle"]
 state = "to depot"
 storage = [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]
- 
+current_depot = 1
+# Delivery bays for depots 1-4.  Each inner list corresponds to one row in
+# ``storage`` and each position in the list corresponds to a storage cell.
+DELIVERY_BAYS = [
+    [7, 9, 11, 14, 15, 17],
+    [24, 26, 28, 30, 32, 34],
+    [37, 40, 43, 46, 49, 52],
+    [38, 41, 44, 47, 50, 53],
+]
+
+current_depot = 0       # zero-based index; depot 1 is the initial depot
+delivery_cursor = 0     # next storage cell to inspect
+active_delivery = None  # (depot_index, storage_index, node)
+
+
+def next_depot():
+    """Return the current depot number, cycling 1 -> 2 -> 3 -> 4 -> 1."""
+    return current_depot + 1
+
+
+def depot_collected():
+    """Advance to the next depot after collecting at the current depot."""
+    global current_depot
+    current_depot = (current_depot + 1) % 4
+
+
+def next_delivery_bay():
+    """Return the node for the next empty storage cell, or None if full.
+
+    Cells are searched cyclically across all four depots.  The selected cell
+    is remembered so ``delivery_completed`` can mark the correct storage
+    entry when delivery finishes.
+    """
+    global delivery_cursor, active_delivery
+
+    total_cells = len(storage) * len(storage[0])
+    for offset in range(total_cells):
+        cell = (delivery_cursor + offset) % total_cells
+        depot_index, storage_index = divmod(cell, len(storage[0]))
+        if storage[depot_index][storage_index] == 0:
+            active_delivery = (
+                depot_index,
+                storage_index,
+                DELIVERY_BAYS[depot_index][storage_index],
+            )
+            delivery_cursor = (cell + 1) % total_cells
+            return active_delivery[2]
+
+    active_delivery = None
+    return None
+
+
+def delivery_completed():
+    """Mark the currently selected delivery bay as occupied."""
+    global active_delivery
+    if active_delivery is None:
+        return False
+
+    depot_index, storage_index, _ = active_delivery
+    storage[depot_index][storage_index] = 1
+    active_delivery = None
+    return True
 def line_follow():
     #get_button_flag()
     global junction_num, junction_armed, junction_reads, clear_reads
@@ -313,12 +373,42 @@ def line_follow():
         #     rotateacw90(left_motor, right_motor)
         #     rotateacw90(left_motor, right_motor)
  
- 
+def update_state_machine():
+    if state == "to depot":
+        state = "delivery"
+    if state == "delivery":
+        state = "to home"
+    if state == "to home":
+        state = "to depot"
+
+def next_depot():
+    pass
+def next_delivery_bay():
+    pass
+
 def junction_handling():
+    global curr_node, imminent_next_node, target, state
     curr_node = imminent_next_node
     if state == "to depot":
         target = next_depot
-        imminent_next_node = next_node(board_graph, curr_node, target)
+    if state == "delivery":
+        target = next_delivery_bay
+    if state == "to home":
+        target = 0
+
+    imminent_next_node = next_node(board_graph, curr_node, target)
+    direction_to_go = next_direction(board_graph, curr_node, target)
+    if imminent_next_node == None or direction_to_go == None:
+        update_state_machine()
+    if direction_to_go == 'forward':
+        move_forward(left_motor, right_motor, 0.01)
+    if direction_to_go == 'left':
+        rotateacw90(left_motor, right_motor)
+    if direction_to_go == 'left':
+        rotateacw90(left_motor, right_motor)
+    if direction_to_go == 'backward':
+        u_turn(left_motor, right_motor)
+
         
     # global delivery_deadline
 
