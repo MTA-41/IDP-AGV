@@ -112,119 +112,119 @@ filled_bay = False # false if loading bay is full
 #state machine for robot will be coded later
 
 
-forward, backward, left, right = "forward", "backward", "left", "right"
-curr_node = 0
+# forward, backward, left, right = "forward", "backward", "left", "right"
+# curr_node = 0
 
-board_graph = {
-    # start box
-    0:  {forward: 35,   backward: None, left: 18,   right: 1},
-    18: {forward: 19,   backward: 0,    left: None, right: None},
-    1:  {forward: 2,    backward: 0,    left: None, right: None},
+# board_graph = {
+#     # start box
+#     0:  {forward: 35,   backward: None, left: 18,   right: 1},
+#     18: {forward: 19,   backward: 0,    left: None, right: None},
+#     1:  {forward: 2,    backward: 0,    left: None, right: None},
 
-    # right wall (heading up, branches go left)
-    2:  {forward: 4,    backward: 1,  left: 3,    right: None},
-    3:  {forward: None, backward: 2,  left: None, right: None},
-    4:  {forward: 6,    backward: 2,  left: 5,    right: None},
-    5:  {forward: None, backward: 4,  left: None, right: None},
-    6:  {forward: 8,    backward: 4,  left: 7,    right: None},
-    7:  {forward: None, backward: 6,  left: None, right: None},
-    8:  {forward: 10,   backward: 6,  left: 9,    right: None},
-    9:  {forward: None, backward: 8,  left: None, right: None},
-    10: {forward: 12,   backward: 8,  left: 11,   right: None},
-    11: {forward: None, backward: 10, left: None, right: None},
-    12: {forward: 14,   backward: 10, left: 13,   right: None},
-    13: {forward: None, backward: 12, left: None, right: None},
-    14: {forward: 16,   backward: 12, left: 15,   right: None},
-    15: {forward: None, backward: 14, left: None, right: None},
-    16: {forward: None, backward: 14, left: 17,   right: None},
-    17: {forward: None, backward: 16, left: None, right: None},
+#     # right wall (heading up, branches go left)
+#     2:  {forward: 4,    backward: 1,  left: 3,    right: None},
+#     3:  {forward: None, backward: 2,  left: None, right: None},
+#     4:  {forward: 6,    backward: 2,  left: 5,    right: None},
+#     5:  {forward: None, backward: 4,  left: None, right: None},
+#     6:  {forward: 8,    backward: 4,  left: 7,    right: None},
+#     7:  {forward: None, backward: 6,  left: None, right: None},
+#     8:  {forward: 10,   backward: 6,  left: 9,    right: None},
+#     9:  {forward: None, backward: 8,  left: None, right: None},
+#     10: {forward: 12,   backward: 8,  left: 11,   right: None},
+#     11: {forward: None, backward: 10, left: None, right: None},
+#     12: {forward: 14,   backward: 10, left: 13,   right: None},
+#     13: {forward: None, backward: 12, left: None, right: None},
+#     14: {forward: 16,   backward: 12, left: 15,   right: None},
+#     15: {forward: None, backward: 14, left: None, right: None},
+#     16: {forward: None, backward: 14, left: 17,   right: None},
+#     17: {forward: None, backward: 16, left: None, right: None},
 
-    # left wall (heading up, branches go right)
-    19: {forward: 21,   backward: 18, left: None, right: 20},
-    20: {forward: None, backward: 19, left: None, right: None},
-    21: {forward: 23,   backward: 19, left: None, right: 22},
-    22: {forward: None, backward: 21, left: None, right: None},
-    23: {forward: 25,   backward: 21, left: None, right: 24},
-    24: {forward: None, backward: 23, left: None, right: None},
-    25: {forward: 27,   backward: 23, left: None, right: 26},
-    26: {forward: None, backward: 25, left: None, right: None},
-    27: {forward: 29,   backward: 25, left: None, right: 28},
-    28: {forward: None, backward: 27, left: None, right: None},
-    29: {forward: 31,   backward: 27, left: None, right: 30},
-    30: {forward: None, backward: 29, left: None, right: None},
-    31: {forward: 33,   backward: 29, left: None, right: 32},
-    32: {forward: None, backward: 31, left: None, right: None},
-    33: {forward: None, backward: 31, left: None, right: 34},
-    34: {forward: None, backward: 33, left: None, right: None},
+#     # left wall (heading up, branches go right)
+#     19: {forward: 21,   backward: 18, left: None, right: 20},
+#     20: {forward: None, backward: 19, left: None, right: None},
+#     21: {forward: 23,   backward: 19, left: None, right: 22},
+#     22: {forward: None, backward: 21, left: None, right: None},
+#     23: {forward: 25,   backward: 21, left: None, right: 24},
+#     24: {forward: None, backward: 23, left: None, right: None},
+#     25: {forward: 27,   backward: 23, left: None, right: 26},
+#     26: {forward: None, backward: 25, left: None, right: None},
+#     27: {forward: 29,   backward: 25, left: None, right: 28},
+#     28: {forward: None, backward: 27, left: None, right: None},
+#     29: {forward: 31,   backward: 27, left: None, right: 30},
+#     30: {forward: None, backward: 29, left: None, right: None},
+#     31: {forward: 33,   backward: 29, left: None, right: 32},
+#     32: {forward: None, backward: 31, left: None, right: None},
+#     33: {forward: None, backward: 31, left: None, right: 34},
+#     34: {forward: None, backward: 33, left: None, right: None},
 
-    # centre line (heading up, left/right arms)
-    35: {forward: 36,   backward: 0,  left: None, right: None},
-    36: {forward: 39,   backward: 35, left: 37,   right: 38},
-    37: {forward: None, backward: 36, left: None, right: None},
-    38: {forward: None, backward: 36, left: None, right: None},
-    39: {forward: 42,   backward: 36, left: 40,   right: 41},
-    40: {forward: None, backward: 39, left: None, right: None},
-    41: {forward: None, backward: 39, left: None, right: None},
-    42: {forward: 45,   backward: 39, left: 43,   right: 44},
-    43: {forward: None, backward: 42, left: None, right: None},
-    44: {forward: None, backward: 42, left: None, right: None},
-    45: {forward: 48,   backward: 42, left: 46,   right: 47},
-    46: {forward: None, backward: 45, left: None, right: None},
-    47: {forward: None, backward: 45, left: None, right: None},
-    48: {forward: 51,   backward: 45, left: 49,   right: 50},
-    49: {forward: None, backward: 48, left: None, right: None},
-    50: {forward: None, backward: 48, left: None, right: None},
-    51: {forward: None, backward: 48, left: 52,   right: 53},
-    52: {forward: None, backward: 51, left: None, right: None},
-    53: {forward: None, backward: 51, left: None, right: None},
-}
+#     # centre line (heading up, left/right arms)
+#     35: {forward: 36,   backward: 0,  left: None, right: None},
+#     36: {forward: 39,   backward: 35, left: 37,   right: 38},
+#     37: {forward: None, backward: 36, left: None, right: None},
+#     38: {forward: None, backward: 36, left: None, right: None},
+#     39: {forward: 42,   backward: 36, left: 40,   right: 41},
+#     40: {forward: None, backward: 39, left: None, right: None},
+#     41: {forward: None, backward: 39, left: None, right: None},
+#     42: {forward: 45,   backward: 39, left: 43,   right: 44},
+#     43: {forward: None, backward: 42, left: None, right: None},
+#     44: {forward: None, backward: 42, left: None, right: None},
+#     45: {forward: 48,   backward: 42, left: 46,   right: 47},
+#     46: {forward: None, backward: 45, left: None, right: None},
+#     47: {forward: None, backward: 45, left: None, right: None},
+#     48: {forward: 51,   backward: 45, left: 49,   right: 50},
+#     49: {forward: None, backward: 48, left: None, right: None},
+#     50: {forward: None, backward: 48, left: None, right: None},
+#     51: {forward: None, backward: 48, left: 52,   right: 53},
+#     52: {forward: None, backward: 51, left: None, right: None},
+#     53: {forward: None, backward: 51, left: None, right: None},
+# }
 
-def find_path(graph, curr_node, target):
-    #implemetation of BFS
-    if curr_node == target:
-        return [curr_node]
-    parents = {curr_node: None}
-    queue = deque([curr_node]) #adds discovered but not visited nodes
-    while queue:
-        node = queue.popleft()
-        for neighbour in graph[node].values():
-            if neighbour is None or neighbour in parents:
-                continue
-            parents[neighbour] = node
-            if neighbour == target:
-                # walk back through the parents to rebuild the path
-                path = [neighbour]
-                while parents[path[-1]] is not None:
-                    path.append(parents[path[-1]])
-                return path[::-1]
-            queue.append(neighbour)
-    return None
-
-
-def next_node(graph, current, target):
-    #gets next node
-    path = find_path(graph, current, target)
-    if path is None or len(path) < 2:
-        return None
-    return path[1]
+# def find_path(graph, curr_node, target):
+#     #implemetation of BFS
+#     if curr_node == target:
+#         return [curr_node]
+#     parents = {curr_node: None}
+#     queue = deque([curr_node]) #adds discovered but not visited nodes
+#     while queue:
+#         node = queue.popleft()
+#         for neighbour in graph[node].values():
+#             if neighbour is None or neighbour in parents:
+#                 continue
+#             parents[neighbour] = node
+#             if neighbour == target:
+#                 # walk back through the parents to rebuild the path
+#                 path = [neighbour]
+#                 while parents[path[-1]] is not None:
+#                     path.append(parents[path[-1]])
+#                 return path[::-1]
+#             queue.append(neighbour)
+#     return None
 
 
-def next_direction(graph, current, target):
-    #get direction of next node
-    nxt = next_node(graph, current, target)
-    if nxt is None:
-        return None
-    for direction, neighbour in graph[current].items():
-        if neighbour == nxt:
-            return direction
+# def next_node(graph, current, target):
+#     #gets next node
+#     path = find_path(graph, current, target)
+#     if path is None or len(path) < 2:
+#         return None
+#     return path[1]
 
-def u_turn():
-    # same sequence your junction 3 handler uses
-    left_motor.off()
-    right_motor.off()
-    move_back(left_motor, right_motor, 0.5)
-    rotateacw90(left_motor, right_motor)
-    rotateacw90(left_motor, right_motor)
+
+# def next_direction(graph, current, target):
+#     #get direction of next node
+#     nxt = next_node(graph, current, target)
+#     if nxt is None:
+#         return None
+#     for direction, neighbour in graph[current].items():
+#         if neighbour == nxt:
+#             return direction
+
+# def u_turn():
+#     # same sequence your junction 3 handler uses
+#     left_motor.off()
+#     right_motor.off()
+#     move_back(left_motor, right_motor, 0.5)
+#     rotateacw90(left_motor, right_motor)
+#     rotateacw90(left_motor, right_motor)
 
 # ---------------- junction debounce settings (counted in sensor reads) ----------------
 JUNCTION_CONFIRM = 3    # junction pattern must be seen this many reads IN A ROW to count
@@ -258,6 +258,17 @@ def line_follow():
     go = True
  
     while go == True:
+
+        flash = 0
+### LIGHT FLASH ###
+        if amber.off() is True and flash >= 500:
+            amber.on()
+            flash = 0
+        elif amber.on() is True and flash >= 500:
+            amber.off()
+            flash = 0
+
+
 
         right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
  
@@ -319,99 +330,146 @@ def line_follow():
 def junction_handling():
     #if state == "to depot":
 
-    # global delivery_deadline
+    global delivery_deadline
 
-    # if junction_num == 1:
-    #     turn_left(left_motor, right_motor, 0.9)
+    if junction_num == 1:
+        turn_left(left_motor, right_motor, 0.9)
 
-    # # CHANGED: this was a chain of separate ifs with >=, so once junction_num
-    # # reached 5+ every later case fired as well. Now one case per junction.
-    # if junction_num == 2:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"entering depot: {junction_num}")
+    # CHANGED: this was a chain of separate ifs with >=, so once junction_num
+    # reached 5+ every later case fired as well. Now one case per junction.
+    if junction_num == 2:
+        right_motor.off()
+        left_motor.off()
+        move_forward(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
+        #print(f"entering depot: {junction_num}")
  
-    # elif junction_num == 3:
-    #     left_motor.off()
-    #     right_motor.off()
-    #     sleep(2)
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     left_motor.off()
-    #     right_motor.off()
-    #     sleep(5)
-    #     #move_back(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #move_back(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"u turn: {junction_num}")
+    elif junction_num == 3:
+        left_motor.off()
+        right_motor.off()
+        sleep(2)
+
+
+        
+
+        #move_back(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
+        #move_back(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
+        #print(f"u turn: {junction_num}")
  
-    # elif junction_num == 4:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)
-    #     #print(f"back on track: {junction_num}")
+    elif junction_num == 4:
+        right_motor.off()
+        left_motor.off()
+        move_forward(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
+        #print(f"back on track: {junction_num}")
  
-    # elif junction_num == 5:
-    #     move_forward(left_motor, right_motor, 0.1)
-    #     #print("ignore depot")
+    elif junction_num == 5:
+        move_forward(left_motor, right_motor, 0.1)
+        #print("ignore depot")
  
-    # elif junction_num == 6:
-    #     right_motor.off()
-    #     left_motor.off()
-    #     move_forward(left_motor, right_motor, 0.6)
-    #     rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
-    #     delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
-    #     #print(f"enter delivery: {junction_num}")
+    elif junction_num == 6:
+        right_motor.off()
+        left_motor.off()
+        move_forward(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
+        delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
+        #print(f"enter delivery: {junction_num}")
         
  
-    # elif junction_num == 7:
-    #     # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
-    #     turn_right(left_motor, right_motor, 0.9)
-    #     #print(f"enter delivery: {junction_num}")
+    elif junction_num == 7:
+        # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
+        turn_right(left_motor, right_motor, 0.9)
+        #print(f"enter delivery: {junction_num}")
  
-    # elif junction_num == 8:
-    #     move_forward(left_motor, right_motor, 0.3)
-    #     #print(f"enter delivery: {junction_num}")
+    elif junction_num == 8:
+        move_forward(left_motor, right_motor, 0.3)
+        #print(f"enter delivery: {junction_num}")
 
 
-    # elif junction_num == 9:
-    #     move_forward(left_motor, right_motor, 0.3)
-    #     #print(f"enter delivery: {junction_num}")
+    elif junction_num == 9:
+        move_forward(left_motor, right_motor, 0.3)
+        #print(f"enter delivery: {junction_num}")
 
-    # elif junction_num == 10:
-    #     turn_right(left_motor, right_motor, 0.9)
-    #     print(f"last corner: {junction_num}")
+    elif junction_num == 10:
+        turn_right(left_motor, right_motor, 0.9)
+        print(f"last corner: {junction_num}")
 
-    # elif junction_num >= 11:
-    #     print('home')
-    #     move_forward(left_motor, right_motor, 1)
-    #     right_motor.off()
-    #     left_motor.off()
-    #     sleep(100)
-
-
+    elif junction_num >= 11:
+        print('home')
+        move_forward(left_motor, right_motor, 1)
+        right_motor.off()
+        left_motor.off()
+        sleep(100)
 
 
-# def get_button_flag():
-#     if button.value() == 1:
-#         if button_flag == False:
-#             button_flag = True 
-#         if button_flag== True:
-#             button_flag = False 
+
+ ### DISTANCE RETRIEVAL ###
+def get_distance():
+    # config I2C Bus
+    i2c_bus = I2C(id=0, sda=Pin(8), scl=Pin(9)) # I2C0 on GP8 & GP9
+    print(i2c_bus.scan())  # Get the address (nb 41=0x29, 82=0x52)
+    
+    # Setup vl53l0 object
+    vl53l0 = VL53L0X(i2c_bus)
+    vl53l0.set_Vcsel_pulse_period(vl53l0.vcsel_period_type[0], 18)
+    vl53l0.set_Vcsel_pulse_period(vl53l0.vcsel_period_type[1], 14)
+
+
+        # Start device
+    vl53l0.start()
+        
+    distance = vl53l0.read()
+    
+    print(f"Distance = {distance}mm")  # Check calibration!
+        
+        # Stop device
+    vl53l0.stop()
+    return distance
+
+
+
+servo1 = Servo(Pin(15)) # Connected to Servo 1
+  
+def grabber_down():
+
+    print("Move to 0°")
+    servo1.set_angle(0)
+
+ 
+def grabber_up():
+
+    print("Move to 30°")
+    servo1.set_angle(30)
+
+
+
+
+
+
+
+amber = amber(pin = 8)
+red = red(pin = 8)
+green = green(pin = 8)
+
+button = Button(Pin = 17)
+clicks = 0
+if button.was_clicked:
+    clicks+=1
                         
-while True:
-    #if button_flag:
-    line_follow()
-    junction_num += 1
-    junction_handling()
-    #get_button_flag()
-    #print (button_flag)
+while go = True:
+    if clicks == 1:
 
+        line_follow()
+        junction_num += 1
+        junction_handling()
 
+    if clicks >= 2:
+        right_motor.off()
+        left_motor.off()
 
+        go = False
 
 
 
@@ -484,6 +542,117 @@ while True:
 
 
 
+### LIGHTS INITIALISATION ###
+
+class amber:
+    def __init__(self, pin=8):
+        # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+        self.led = Pin(pin, Pin.OUT)
+        self.off()
+
+    def on(self):
+        self.led.value(1)
+
+    def off(self):
+        self.led.value(0)
+
+
+class red:
+    def __init__(self, pin=8):
+        # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+        self.led = Pin(pin, Pin.OUT)
+        self.off()
+
+    def on(self):
+        self.led.value(1)
+
+    def off(self):
+        self.led.value(0)
+
+
+class green:
+    def __init__(self, pin=8):
+        # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+        self.led = Pin(pin, Pin.OUT)
+        self.off()
+
+    def on(self):
+        self.led.value(1)
+
+    def off(self):
+        self.led.value(0)
+
+
+
+
+
+
+### BUTTON INITIALISATION ###
+
+class Button:
+    def __init__(self, pin=17, debounce_ms=30):
+        # Project wiring uses a pull-down: released = 0, pressed = 1.
+        self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
+        self.debounce_ms = debounce_ms
+
+    def was_clicked(self):
+        """Return True once per press, and re-arm after the button is released."""
+        if self.pin.value() != 1:
+            return False
+
+        # Confirm the press and suppress contact bounce.
+        sleep_ms(self.debounce_ms)
+        if self.pin.value() != 1:
+            return False
+
+        # Wait for release so holding the button cannot count as repeated clicks.
+        while self.pin.value() == 1:
+            sleep_ms(10)
+        sleep_ms(self.debounce_ms)
+        return True
+
+
+
+
+
+### servo initialisation ###
+
+class Servo:
+    # Common settings for 270° servos:
+    # 0.5 ms → minimum (0°)
+    # 2.5 ms → maximum (270°)
+    # Total span = 2.0 ms
+    # Frequency: 50 Hz (20 ms period)
+    # 
+    # Duty % = Pulse width / Period x 100
+    # Minimum (0°) = 0.5/20
+    # Centre (135°) = 1.5/20
+    # Maximum (270°) = 2.5/20
+    #
+    # Convert to Pico PWM (16-bit)
+    # Pico uses: 0 → 65535
+    # Duty value = Duty Fraction x 65535
+    # Minimum (0.5 ms) = 0.025 * 65535
+    # Centre (1.5 ms) = 0.075 * 65535
+    # Maximum (2.5 ms) = 0.0125 * 65535
+    MIN_DUTY = 1638 # 0°
+    MID_DUTY = 4915 # 135°
+    MAX_DUTY = 8192 # 270°
+    
+    def __init__(self, ServoPin):
+        self.servo = PWM(ServoPin)
+        self.servo.freq(50)  # 50 Hz for servo
+ 
+    # Convert angle (0–270) to duty
+    def set_angle(self, angle):
+       # Clamp angle
+       if angle < 0:
+           angle = 0
+       if angle > 270:
+           angle = 270
+ 
+       duty = int(Servo.MIN_DUTY + (angle / 270) * (Servo.MAX_DUTY - Servo.MIN_DUTY))
+       self.servo.duty_u16(duty)
 
 
 
