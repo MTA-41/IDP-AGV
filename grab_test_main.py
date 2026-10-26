@@ -337,33 +337,43 @@ def line_follow_step():
         turn_left(left_motor, right_motor, 0.001)
 
 
+SCAN_GRAB_FOLLOW_MS = 500
+SCAN_DROP_FOLLOW_MS = 3000
+
+def line_follow_for_ms(duration_ms):
+    scan_start_ms = ticks_ms()
+    second_counter = 0
+    while second_counter < duration_ms:
+        line_follow_step()
+        second_counter = ticks_diff(ticks_ms(), scan_start_ms)
+
+
 def scan_grab():
     arm_down()
     grab_in()
     print('Scanning for box')
-    scan = True
 
+    # ### DISTANCE TO BOX - DISABLED ###
+    # scan = True
+    # while scan == True:
+    #     distance = get_distance()
+    #     if distance <= 40:
+    #         scan = False
+    #     else:
+    #         scan = True
+    #         line_follow_step()
 
-
-### DISTANCE TO BOX ###
-    while scan == True:
-        distance = get_distance()
-        if distance <= 40:
-            right_motor.off()
-            left_motor.off()
-            arm_up90()
-            grab_out60()
-            move_forward(left_motor, right_motor, 0.6)
-            arm_down()
-            sleep(1)
-            grab_in()
-            sleep(0.5)
-            arm_up30()
-            scan = False
-
-        else:
-            scan = True
-            line_follow_step()
+    line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
+    right_motor.off()
+    left_motor.off()
+    arm_up90()
+    grab_out60()
+    move_forward(left_motor, right_motor, 0.6)
+    arm_down()
+    sleep(1)
+    grab_in()
+    sleep(0.5)
+    arm_up30()
 
 
 
@@ -371,26 +381,25 @@ def scan_drop():
     arm_down()
     grab_in()
     print('Scanning for box')
-    scan = True
 
+    # ### DISTANCE TO BOX - DISABLED ###
+    # scan = True
+    # while scan == True:
+    #     distance = get_distance()
+    #     if distance <= 40:
+    #         scan = False
+    #     else:
+    #         line_follow_step()
 
-
-### DISTANCE TO BOX ###
-    while scan == True:
-        distance = get_distance()
-        if distance <= 40:
-            right_motor.off()
-            left_motor.off()
-            arm_down()
-            sleep(1)
-            move_forward(left_motor, right_motor, 0.6)
-            grab_out30()
-            move_back(left_motor, right_motor, 0.8)
-            arm_up90()
-            scan = False
-
-        else:
-            line_follow_step()
+    line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
+    right_motor.off()
+    left_motor.off()
+    arm_down()
+    sleep(1)
+    move_forward(left_motor, right_motor, 0.6)
+    grab_out30()
+    move_back(left_motor, right_motor, 0.8)
+    arm_up90()
 
 
 
