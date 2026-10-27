@@ -1332,6 +1332,7 @@ def junction_handling():
     elif junction_num == 6:
         right_motor.off()
         left_motor.off()
+        move_forward(left_motor, right_motor, 0.6)
         # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
         rotatecw90(left_motor, right_motor)
         right_motor.off()
