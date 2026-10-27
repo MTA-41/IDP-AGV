@@ -1233,11 +1233,12 @@ def scan_drop():
         right_motor.off()
         left_motor.off()
         print('grab code')
-        sleep(3)
+        #sleep(3)
         #arm_down()
         sleep(1)
         #move_forward(left_motor, right_motor, 0.1)
         grab_out30()
+        sleep(0.5)
         move_back(left_motor, right_motor, 0.8)
         arm_up90()
         scan = False
@@ -1332,7 +1333,7 @@ def junction_handling():
         right_motor.off()
         left_motor.off()
         # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
-        turn_right(left_motor, right_motor, 0.2)
+        rotatecw90(left_motor, right_motor)
         right_motor.off()
         left_motor.off()
         #print(f"enter delivery: {junction_num}")
@@ -1415,12 +1416,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     print("Grab Move to 0°")
-    servo_grab.set_angle(100)
+    servo_grab.set_angle(105)
 
 def grab_out30():
 
     print("Grab Move to 30°")
-    servo_grab.set_angle(40)
+    servo_grab.set_angle(70)
 
 def grab_out60():
 
