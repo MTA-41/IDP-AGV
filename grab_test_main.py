@@ -1351,7 +1351,7 @@ def junction_handling():
         #print(f"enter delivery: {junction_num}")
 
     elif junction_num == 9:
-        turn_right(left_motor, right_motor, 0.9)
+        turn_right(left_motor, right_motor, 0.6)
         print(f"last corner: {junction_num}")
 
     elif junction_num >= 10:
@@ -1415,12 +1415,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     print("Grab Move to 0°")
-    servo_grab.set_angle(90)
+    servo_grab.set_angle(100)
 
 def grab_out30():
 
     print("Grab Move to 30°")
-    servo_grab.set_angle(20)
+    servo_grab.set_angle(40)
 
 def grab_out60():
 
