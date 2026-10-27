@@ -1460,7 +1460,7 @@ amber = amber(pin = 8)
 
 button = Button(pin = 17)
 clicks = 0
-if button.was_clicked:
+if button.was_clicked():
     clicks+=1
     print('clicked')
 
