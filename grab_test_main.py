@@ -6,6 +6,126 @@ from collections import deque
 
 
 
+### LIGHTS INITIALISATION ###
+
+class amber():
+    def __init__(self, pin=8):
+        # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+        self.led = Pin(pin, Pin.OUT)
+        self.off()
+
+    def on(self):
+        self.led.value(1)
+
+    def off(self):
+        self.led.value(0)
+
+
+# class red():
+#     def __init__(self, pin=8):
+#         # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+#         self.led = Pin(pin, Pin.OUT)
+#         self.off()
+
+#     def on(self):
+#         self.led.value(1)
+
+#     def off(self):
+#         self.led.value(0)
+
+
+# class green():
+#     def __init__(self, pin=8):
+#         # GP8 is the onboard LED pin on a Raspberry Pi Pico.
+#         self.led = Pin(pin, Pin.OUT)
+#         self.off()
+
+#     def on(self):
+#         self.led.value(1)
+
+#     def off(self):
+#         self.led.value(0)
+
+
+
+
+
+
+# ### BUTTON INITIALISATION ###
+
+class Button:
+    def __init__(self, pin=17, debounce_ms=30):
+        # Project wiring uses a pull-down: released = 0, pressed = 1.
+        self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
+        self.debounce_ms = debounce_ms
+
+    def was_clicked(self):
+        """Return True once per press, and re-arm after the button is released."""
+        if self.pin.value() != 1:
+            return False
+
+        # Confirm the press and suppress contact bounce.
+        sleep_ms(self.debounce_ms)
+        if self.pin.value() != 1:
+            return False
+
+        # Wait for release so holding the button cannot count as repeated clicks.
+        while self.pin.value() == 1:
+            sleep_ms(10)
+        sleep_ms(self.debounce_ms)
+        return True
+
+
+
+
+
+# ### servo initialisation ###
+
+class Servo():
+    # Common settings for 270° servos:
+    # 0.5 ms → minimum (0°)
+    # 2.5 ms → maximum (270°)
+    # Total span = 2.0 ms
+    # Frequency: 50 Hz (20 ms period)
+    # 
+    # Duty % = Pulse width / Period x 100
+    # Minimum (0°) = 0.5/20
+    # Centre (135°) = 1.5/20
+    # Maximum (270°) = 2.5/20
+    #
+    # Convert to Pico PWM (16-bit)
+    # Pico uses: 0 → 65535
+    # Duty value = Duty Fraction x 65535
+    # Minimum (0.5 ms) = 0.025 * 65535
+    # Centre (1.5 ms) = 0.075 * 65535
+    # Maximum (2.5 ms) = 0.0125 * 65535
+    MIN_DUTY = 1638 # 0°
+    MID_DUTY = 4915 # 135°
+    MAX_DUTY = 8192 # 270°
+    
+    def __init__(self, ServoPin):
+        self.servo = PWM(ServoPin)
+        self.servo.freq(50)  # 50 Hz for servo
+ 
+    # Convert angle (0–270) to duty
+    def set_angle(self, angle):
+       # Clamp angle
+       if angle < 0:
+           angle = 0
+       if angle > 270:
+           angle = 270
+ 
+       duty = int(Servo.MIN_DUTY + (angle / 270) * (Servo.MAX_DUTY - Servo.MIN_DUTY))
+       self.servo.duty_u16(duty)
+
+
+
+
+
+
+
+
+
 
 
 
@@ -719,11 +839,11 @@ class Motor:
         self.pwm.duty_u16(0)
         
     def Forward(self, speed=100):
-        self.mDir.value(0)                     # forward = 0 reverse = 1 motor
+        self.mDir.value(1)                     # forward = 0 reverse = 1 motor
         self.pwm.duty_u16(int(65535 * speed / 100))  # speed range 0-100 motor
  
     def Reverse(self, speed=100):
-        self.mDir.value(1)
+        self.mDir.value(0)
         self.pwm.duty_u16(int(65535 * speed / 100))
  
  
@@ -751,7 +871,7 @@ def move_back(motor_left, motor_right, duration):
     sleep(duration)
     
  
-def rotateacw90(motor_left, motor_right, duration=0.60):
+def rotateacw90(motor_left, motor_right, duration=1.0):
     # motor_right.off()
     # motor_left.off()
     # move_forward(motor_left, motor_right, 0.6)
@@ -765,7 +885,7 @@ def rotateacw90(motor_left, motor_right, duration=0.60):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.60):
+def rotatecw90(motor_left, motor_right, duration=1.0):
     # motor_right.off()
     # motor_left.off()
     # move_forward(motor_left, motor_right, 0.6)
@@ -794,8 +914,8 @@ left_light_sensor = Pin(20, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
 back_light_sensor = Pin(21, Pin.IN)
  
-left_motor = Motor(dirPin=7, PWMPin=6)
-right_motor = Motor(dirPin=4, PWMPin=5)
+left_motor = Motor(dirPin=4, PWMPin=5)
+right_motor = Motor(dirPin=7, PWMPin=6)
  
  
 home = False
@@ -994,15 +1114,15 @@ def line_follow():
 
         # ----- driving -----
         if right == 0 and left == 0 and front == 1:
-            #print('f')
+            print('f')
             move_forward(left_motor, right_motor, 0.001)
 
         elif right == 1 and left == 0 and front == 0:
-            #print('r')
+            print('r')
             turn_right(left_motor, right_motor, 0.001)
 
         elif right == 0 and left == 1 and front == 0:
-            #print('l')
+            print('l')
             turn_left(left_motor, right_motor, 0.001)
 
         elif on_junction:
@@ -1030,15 +1150,15 @@ def line_follow_step():
      
     # ----- driving -----
     if right == 0 and left == 0 and front == 1:
-    #print('f')
+        #print('f')
         move_forward(left_motor, right_motor, 0.001)
     
     elif right == 1 and left == 0 and front == 0:
-    #print('r')
+        #print('r')
         turn_right(left_motor, right_motor, 0.001)
     
     elif right == 0 and left == 1 and front == 0:
-    #print('l')
+        #print('l')
         turn_left(left_motor, right_motor, 0.001)
 
 
@@ -1051,7 +1171,7 @@ def scan_grab():
 
 
 
-SCAN_GRAB_FOLLOW_MS = 500
+SCAN_GRAB_FOLLOW_MS = 1500
 SCAN_DROP_FOLLOW_MS = 3000
 
 def line_follow_for_ms(duration_ms):
@@ -1076,11 +1196,15 @@ def scan_grab():
         line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
+        print('grab code')
+        sleep(3)
         arm_up90()
         grab_out60()
-        move_forward(left_motor, right_motor, 0.6)
+        move_forward(left_motor, right_motor, 0.06)
+        right_motor.off()
+        left_motor.off()
         arm_down()
-        sleep(1)
+        sleep(3)
         grab_in()
         sleep(0.5)
         arm_up30()
@@ -1104,9 +1228,11 @@ def scan_drop():
     while scan == True:
         #distance = get_distance()
         #if distance <= 40:
-        line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
+        #line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
+        print('grab code')
+        sleep(3)
         arm_down()
         sleep(1)
         move_forward(left_motor, right_motor, 0.6)
@@ -1122,11 +1248,13 @@ def scan_drop():
 
 def junction_handling():
     #if state == "to depot":
+    global junction_num
 
     global delivery_deadline
 
     if junction_num == 1:
-        turn_left(left_motor, right_motor, 0.9)
+        turn_left(left_motor, right_motor, 0.55)
+        print('left')
 
     # CHANGED: this was a chain of separate ifs with >=, so once junction_num
     # reached 5+ every later case fired as well. Now one case per junction.
@@ -1136,9 +1264,11 @@ def junction_handling():
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
         print(f"entering depot: {junction_num}")
+        right_motor.off()
+        left_motor.off()
 
         scan_grab()
-        junction_num += 1
+        #junction_num += 1
 
 
 
@@ -1155,12 +1285,12 @@ def junction_handling():
         rotateacw90(left_motor, right_motor)
         #move_back(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)
-        #print(f"u turn: {junction_num}")
+        print(f"u turn: {junction_num}")
  
     elif junction_num == 4:
         right_motor.off()
         left_motor.off()
-        move_forward(left_motor, right_motor, 0.6)
+        move_forward(left_motor, right_motor, 0.7)
         rotateacw90(left_motor, right_motor)
         #print(f"back on track: {junction_num}")
  
@@ -1236,44 +1366,44 @@ def get_distance():
 
 
 
-servo1 = Servo(Pin(15)) # Connected to Servo 1
+servo1 = Servo(Pin(13)) # Connected to Servo 1
   
 def arm_down():
 
     print("Move to 0°")
-    servo1.set_angle(0)
+    servo1.set_angle(40)
 
  
 def arm_up30():
 
     print("Move to 30°")
-    servo1.set_angle(30)
+    servo1.set_angle(-30)
 
 
 def arm_up90():
 
     print("Move to 90°")
-    servo1.set_angle(90)
+    servo1.set_angle(-30)
 
 
 
 
-servo_grab = Servo(Pin(13))
+servo_grab = Servo(Pin(15))
 
 def grab_in():
 
     print("Grab Move to 0°")
-    servo_grab.set_angle(90)
+    servo_grab.set_angle(80)
 
 def grab_out30():
 
     print("Grab Move to 30°")
-    servo_grab.set_angle(30)
+    servo_grab.set_angle(-30)
 
 def grab_out60():
 
     print("Grab Move to 60°")
-    servo_grab.set_angle(60)
+    servo_grab.set_angle(-30)
 
 
 
@@ -1304,22 +1434,31 @@ amber = amber(pin = 8)
 #red = red(pin = 8)
 #green = green(pin = 8)
 
-button = Button(Pin = 17)
+button = Button(pin = 17)
 clicks = 0
 if button.was_clicked:
     clicks+=1
+    print('clicked')
 
 
 
-
+go = True
 while go == True:
-    if clicks == 1:
+    junction_num == 0
+    arm_up90()
+    grab_out60()
+    while clicks == 1:
+        print('go')
         start_amber_flash()
+        
+        sleep(1)
+        move_forward(left_motor, right_motor, 0.3)
         line_follow()
         junction_num += 1
         junction_handling()
 
     if clicks >= 2:
+        print('stopped')
         right_motor.off()
         left_motor.off()
         stop_amber_flash()
@@ -1471,7 +1610,7 @@ while go == True:
 
 # ### servo initialisation ###
 
-# class Servo:
+# class Servo():
 #     # Common settings for 270° servos:
 #     # 0.5 ms → minimum (0°)
 #     # 2.5 ms → maximum (270°)
