@@ -1342,14 +1342,14 @@ def junction_handling():
     elif junction_num == 7:
         right_motor.off()
         left_motor.off()
-        move_forward(left_motor, right_motor, 0.3)
+        move_forward(left_motor, right_motor, 0.1)
         right_motor.off()
         left_motor.off()
         #print(f"enter delivery: {junction_num}")
 
 
     elif junction_num == 8:
-        move_forward(left_motor, right_motor, 0.3)
+        move_forward(left_motor, right_motor, 0.1)
         #print(f"enter delivery: {junction_num}")
 
     elif junction_num == 9:
