@@ -1171,8 +1171,8 @@ def scan_grab():
 
 
 
-SCAN_GRAB_FOLLOW_MS = 1500
-SCAN_DROP_FOLLOW_MS = 3000
+SCAN_GRAB_FOLLOW_MS = 750
+SCAN_DROP_FOLLOW_MS = 3200
 
 def line_follow_for_ms(duration_ms):
     scan_start_ms = ticks_ms()
@@ -1200,15 +1200,16 @@ def scan_grab():
         sleep(3)
         arm_up90()
         grab_out60()
-        move_forward(left_motor, right_motor, 0.06)
+        #move_forward(left_motor, right_motor, 0.06)
         right_motor.off()
         left_motor.off()
         arm_down()
-        sleep(3)
+        sleep(1)
         grab_in()
         sleep(0.5)
         arm_up30()
         scan = False
+
 
         #else:
             #scan = True
@@ -1217,11 +1218,11 @@ def scan_grab():
 
 
 def scan_drop():
-    arm_down()
-    grab_in()
+    #arm_down()
+    #grab_in()
     print('Scanning for empty space')
     scan = True
-
+    line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
 
 
 ### DISTANCE TO BOX ###
@@ -1233,9 +1234,9 @@ def scan_drop():
         left_motor.off()
         print('grab code')
         sleep(3)
-        arm_down()
+        #arm_down()
         sleep(1)
-        move_forward(left_motor, right_motor, 0.6)
+        #move_forward(left_motor, right_motor, 0.1)
         grab_out30()
         move_back(left_motor, right_motor, 0.8)
         arm_up90()
@@ -1270,69 +1271,90 @@ def junction_handling():
         scan_grab()
         #junction_num += 1
 
+        move_forward(left_motor, right_motor, 1.0)
+        right_motor.off()
+        left_motor.off()
+        rotateacw90(left_motor, right_motor)
+                #move_back(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
+        print(f"u turn: {junction_num}")
+
 
 
  
-    elif junction_num == 3:
-        left_motor.off()
-        right_motor.off()
-        sleep(2)
+    # elif junction_num == 3:
+    #     left_motor.off()
+    #     right_motor.off()
+    #     sleep(2)
 
 
         
 
-        #move_back(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        #move_back(left_motor, right_motor, 0.6)
-        rotateacw90(left_motor, right_motor)
-        print(f"u turn: {junction_num}")
+        
  
-    elif junction_num == 4:
+    elif junction_num == 3:
         right_motor.off()
         left_motor.off()
         move_forward(left_motor, right_motor, 0.7)
         rotateacw90(left_motor, right_motor)
         #print(f"back on track: {junction_num}")
  
-    elif junction_num == 5:
+    elif junction_num == 4:
+        right_motor.off()
+        left_motor.off()
         move_forward(left_motor, right_motor, 0.1)
-        #print("ignore depot")
+        right_motor.off()
+        left_motor.off()
+        print("ignore depot")
  
-    elif junction_num == 6:
+    elif junction_num == 5:
         right_motor.off()
         left_motor.off()
         move_forward(left_motor, right_motor, 0.6)
         rotateacw90(left_motor, right_motor)    # CHANGED: was duration 0.1, far too short for 90 degrees
         
         scan_drop()
-        junction_num += 1
+        #junction_num += 1
         
-        
+        #move_forward(left_motor, right_motor, 0.0)
+        right_motor.off()
+        left_motor.off()
+        rotateacw90(left_motor, right_motor)
+                        #move_back(left_motor, right_motor, 0.6)
+        rotateacw90(left_motor, right_motor)
         
         
         #delivery_deadline = ticks_add(ticks_ms(), DELIVERY_FOLLOW_MS)
         #print(f"enter delivery: {junction_num}")
         
  
-    elif junction_num == 7:
+    elif junction_num == 6:
+        right_motor.off()
+        left_motor.off()
         # note: 7 is the delivery dead end, counted inside line_follow, so this never runs
-        turn_right(left_motor, right_motor, 0.9)
+        turn_right(left_motor, right_motor, 0.2)
+        right_motor.off()
+        left_motor.off()
         #print(f"enter delivery: {junction_num}")
  
+    elif junction_num == 7:
+        right_motor.off()
+        left_motor.off()
+        move_forward(left_motor, right_motor, 0.3)
+        right_motor.off()
+        left_motor.off()
+        #print(f"enter delivery: {junction_num}")
+
+
     elif junction_num == 8:
         move_forward(left_motor, right_motor, 0.3)
         #print(f"enter delivery: {junction_num}")
 
-
     elif junction_num == 9:
-        move_forward(left_motor, right_motor, 0.3)
-        #print(f"enter delivery: {junction_num}")
-
-    elif junction_num == 10:
         turn_right(left_motor, right_motor, 0.9)
         print(f"last corner: {junction_num}")
 
-    elif junction_num >= 11:
+    elif junction_num >= 10:
         print('home')
         move_forward(left_motor, right_motor, 1)
         right_motor.off()
@@ -1371,13 +1393,13 @@ servo1 = Servo(Pin(13)) # Connected to Servo 1
 def arm_down():
 
     print("Move to 0°")
-    servo1.set_angle(40)
+    servo1.set_angle(35)
 
  
 def arm_up30():
 
     print("Move to 30°")
-    servo1.set_angle(-30)
+    servo1.set_angle(-15)
 
 
 def arm_up90():
@@ -1393,12 +1415,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     print("Grab Move to 0°")
-    servo_grab.set_angle(80)
+    servo_grab.set_angle(90)
 
 def grab_out30():
 
     print("Grab Move to 30°")
-    servo_grab.set_angle(-30)
+    servo_grab.set_angle(20)
 
 def grab_out60():
 
