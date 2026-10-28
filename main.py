@@ -541,7 +541,7 @@ forward, backward, left, right = (
 
 SCAN_GRAB_FOLLOW_MS = 750
 STOP_SECONDS = 2
-SCAN_DROP_FOLLOW_MS = 3200
+SCAN_DROP_FOLLOW_MS = 3400
 JUNCTION_CONFIRM = 3
 JUNCTION_CLEAR = 20
 BOX_CONFIRM = 3
@@ -695,19 +695,19 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
 def arm_down():
 
     #print("Move to 0°")
-    servo1.set_angle(35)
+    servo1.set_angle(25)
 
  
 def arm_up30():
 
     #print("Move to 30°")
-    servo1.set_angle(-15)
+    servo1.set_angle(-80)
 
 
 def arm_up90():
 
     #print("Move to 90°")
-    servo1.set_angle(-30)
+    servo1.set_angle(-90)
 
 
 
@@ -717,12 +717,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     #print("Grab Move to 0°")
-    servo_grab.set_angle(120)
+    servo_grab.set_angle(135)
 
 def grab_out30():
 
     #print("Grab Move to 30°")
-    servo_grab.set_angle(90)
+    servo_grab.set_angle(100)
 
 def grab_out60():
 
@@ -1191,6 +1191,9 @@ def collection_detour():
 #MAG     global box_polarity, box_row
     junction_node = prev_node            # the junction we came from (2), not the depot (3)
 #MAG     box_polarity = read_box_polarity()
+    move_forward(left_motor, right_motor, 0.2)
+    left_motor.off()
+    right_motor.off()
     scan_grab()
 #MAG     box_row = choose_bay_row(box_polarity, curr_node)   # curr_node is the depot here
 #MAG     set_box_leds(box_polarity)                          # LED on while carrying
@@ -1525,10 +1528,11 @@ def main():
     print("[NAVIGATION] Waiting for initial board event")
 
     button_on = False
-
+    arm_up90()
+    grab_out60()
+    
     while not halted:
-        arm_up90()
-        grab_out60()
+
         if button.was_clicked():
             button_on = button.is_on()
             print("[BUTTON] State:", "ON" if button_on else "OFF")
