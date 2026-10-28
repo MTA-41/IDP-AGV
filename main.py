@@ -442,7 +442,7 @@ class VL53L0X:
 
 
 class Button:
-    def __init__(self, pin=17, debounce_ms=30):
+    def __init__(self, pin=10, debounce_ms=30):
         self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
         self.debounce_ms = debounce_ms
         self.click_count = 0
@@ -476,7 +476,7 @@ class Button:
 # ======================================================================
 # COMPONENTS
 # ======================================================================
-button = Button(pin=17, debounce_ms=30)
+button = Button(pin=10, debounce_ms=30)
 right_light_sensor = Pin(18, Pin.IN)
 left_light_sensor = Pin(20, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
