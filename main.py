@@ -1,4 +1,4 @@
-from machine import Pin, PWM, I2C, ADC
+from machine import Pin, PWM, I2C, ADC, Timer
 from micropython import const
 from time import *
 from collections import deque
@@ -476,7 +476,7 @@ class Button:
 # ======================================================================
 # COMPONENTS
 # ======================================================================
-button = Button(pin=10, debounce_ms=30)
+button = Button(pin=11, debounce_ms=30)
 right_light_sensor = Pin(18, Pin.IN)
 left_light_sensor = Pin(20, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
@@ -488,13 +488,13 @@ right_motor = Motor(dirPin=7, PWMPin=6)
 magnetometer = DRV5055(pin=26)
 servo1 = Servo(Pin(13))
 
-#MAG red_led = Pin(10, Pin.OUT)      # on while carrying a NEGATIVE box (top level)
-#MAG green_led = Pin(11, Pin.OUT)    # on while carrying a POSITIVE box (bottom level)
-#MAG
-#MAG RIGHT_DEPOT_NODES = {3, 5}      # 20 and 22 are the left-side depots
-#MAG box_polarity = None             # "positive", "negative" or None
-#MAG box_row = None                  # row of DELIVERY_BAYS/storage for the held box
-#MAG
+red_led = Pin(9, Pin.OUT)      # on while carrying a NEGATIVE box (top level)
+green_led = Pin(10, Pin.OUT)    # on while carrying a POSITIVE box (bottom level)
+
+RIGHT_DEPOT_NODES = {3, 5}      # 20 and 22 are the left-side depots
+box_polarity = None             # "positive", "negative" or None
+box_row = None                  # row of DELIVERY_BAYS/storage for the held box
+
 #MAG def set_box_leds(polarity):
 #MAG     red_led.value(1 if polarity == "negative" else 0)
 #MAG     green_led.value(1 if polarity == "positive" else 0)
@@ -1519,6 +1519,19 @@ def line_follow():
     return False
 
 
+
+amber = Pin(8, Pin.OUT)
+amber_timer = Timer()                      # use Timer(-1) on older MicroPython builds
+
+def _flash_amber(timer):
+    amber.value(not amber.value())         # keep this tiny: it runs in an interrupt
+
+def start_amber_flash():
+    amber_timer.init(period=500, mode=Timer.PERIODIC, callback=_flash_amber)   # 500 ms = 1 Hz
+
+def stop_amber_flash():
+    amber_timer.deinit()
+    amber.value(0)
 # ======================================================================
 # MAIN
 # ======================================================================
@@ -1535,6 +1548,10 @@ def main():
 
         if button.was_clicked():
             button_on = button.is_on()
+            if button_on:
+                start_amber_flash()
+            else:
+                stop_amber_flash()
             print("[BUTTON] State:", "ON" if button_on else "OFF")
             #start_amber_flash()
 
@@ -1560,27 +1577,3 @@ if __name__ == "__main__":
         right_motor.off()
         print("[ERROR]", error)
         raise
-
-
-
-
-    
-    
-    
-#### AMBER FLASHING CONCURRENTLY ###
-# amber_timer = Timer()
-
-# def flash_amber(timer):
-#     amber.led.toggle()
-
-# def start_amber_flash():
-#     amber_timer.init(
-#         period=500,
-#         mode=Timer.PERIODIC,
-#         callback=flash_amber
-#     )
-
-# def stop_amber_flash():
-#     amber_timer.deinit()
-#     amber.off()
-
