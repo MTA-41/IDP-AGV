@@ -53,11 +53,11 @@ class Motor:
         self.pwm.duty_u16(0)
 
     def Forward(self, speed=100):
-        self.mDir.value(0)
+        self.mDir.value(1)
         self.pwm.duty_u16(int(65535 * speed / 100))
 
     def Reverse(self, speed=100):
-        self.mDir.value(1)
+        self.mDir.value(0)
         self.pwm.duty_u16(int(65535 * speed / 100))
 
 
@@ -476,14 +476,14 @@ class Button:
 # ======================================================================
 # COMPONENTS
 # ======================================================================
-button = Button(pin=17, debounce_ms=30)
+button = Button(pin=10, debounce_ms=30)
 right_light_sensor = Pin(18, Pin.IN)
 left_light_sensor = Pin(20, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
 back_light_sensor = Pin(21, Pin.IN)
 
-left_motor = Motor(dirPin=7, PWMPin=6)
-right_motor = Motor(dirPin=4, PWMPin=5)
+left_motor = Motor(dirPin=4, PWMPin=5)
+right_motor = Motor(dirPin=7, PWMPin=6)
 
 magnetometer = DRV5055(pin=26)
 servo1 = Servo(Pin(13))
@@ -596,7 +596,7 @@ DEPOT_NODES = [3, 5, 20, 22]
 # MOTOR MOVEMENT FUNCTIONS
 # ======================================================================
 def move_forward(motor_left, motor_right, duration):
-    print("[MOVE] Forward | duration:", duration)
+    #print("[MOVE] Forward | duration:", duration)
     motor_left.Forward()
     motor_right.Forward()
     sleep(duration)
@@ -623,15 +623,16 @@ def move_back(motor_left, motor_right, duration):
     sleep(duration)
 
 
-def rotateacw90(motor_left, motor_right, duration=1.0):
+def rotateacw90(motor_left, motor_right, duration=0.8):
     global current_direction
     current_direction -= 1
     current_direction = current_direction % 4
     motor_right.off()
     motor_left.off()
-    # move_forward(motor_left, motor_right, 0.6)
+    move_forward(motor_left, motor_right, 0.6)
     motor_left.off()
     motor_right.off()
+    sleep(1)
     motor_right.Forward()
     #print('rr')
     motor_left.Reverse()
@@ -640,15 +641,16 @@ def rotateacw90(motor_left, motor_right, duration=1.0):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=1.0):
+def rotatecw90(motor_left, motor_right, duration=0.8):
     global current_direction
     current_direction += 1
     current_direction = current_direction % 4
     motor_right.off()
     motor_left.off()
-    # move_forward(motor_left, motor_right, 0.6)
+    move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
+    sleep(1)
     motor_left.Forward()
     #print('rl')
     motor_right.Reverse()
@@ -1521,6 +1523,7 @@ def main():
         if button.was_clicked():
             button_on = button.is_on()
             print("[BUTTON] State:", "ON" if button_on else "OFF")
+            #start_amber_flash()
 
         if button_on:
             event_detected = line_follow()
@@ -1544,3 +1547,27 @@ if __name__ == "__main__":
         right_motor.off()
         print("[ERROR]", error)
         raise
+
+
+
+
+    
+    
+    
+#### AMBER FLASHING CONCURRENTLY ###
+# amber_timer = Timer()
+
+# def flash_amber(timer):
+#     amber.led.toggle()
+
+# def start_amber_flash():
+#     amber_timer.init(
+#         period=500,
+#         mode=Timer.PERIODIC,
+#         callback=flash_amber
+#     )
+
+# def stop_amber_flash():
+#     amber_timer.deinit()
+#     amber.off()
+
