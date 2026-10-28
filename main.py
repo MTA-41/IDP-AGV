@@ -476,7 +476,7 @@ class Button:
 # ======================================================================
 # COMPONENTS
 # ======================================================================
-button = Button(pin=10, debounce_ms=30)
+button = Button(pin=17, debounce_ms=30)
 right_light_sensor = Pin(18, Pin.IN)
 left_light_sensor = Pin(20, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
@@ -920,7 +920,8 @@ def find_path(graph, curr_node, target):
         return [curr_node]
 
     parents = {curr_node: None}
-    queue = deque([curr_node])
+    queue = deque((), 64)        # MicroPython: iterable must be empty, maxlen is required
+    queue.append(curr_node) 
 
     while queue:
         node = queue.popleft()
