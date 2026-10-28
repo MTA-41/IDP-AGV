@@ -1520,6 +1520,8 @@ def main():
     button_on = False
 
     while not halted:
+        arm_up90()
+        grab_out60()
         if button.was_clicked():
             button_on = button.is_on()
             print("[BUTTON] State:", "ON" if button_on else "OFF")
