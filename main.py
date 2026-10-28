@@ -920,6 +920,7 @@ def find_path(graph, curr_node, target):
         return [curr_node]
 
     parents = {curr_node: None}
+    print(f"expected breal {curr_node}")
     queue = deque([curr_node])
 
     while queue:
