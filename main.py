@@ -603,27 +603,27 @@ def move_forward(motor_left, motor_right, duration):
 
 
 def turn_left(motor_left, motor_right, duration):
-    print("[MOVE] Line correction left | duration:", duration)
+    #print("[MOVE] Line correction left | duration:", duration)
     motor_left.off()
     motor_right.Forward()
     sleep(duration)
 
 
 def turn_right(motor_left, motor_right, duration):
-    print("[MOVE] Line correction right | duration:", duration)
+    #print("[MOVE] Line correction right | duration:", duration)
     motor_right.off()
     motor_left.Forward()
     sleep(duration)
 
 
 def move_back(motor_left, motor_right, duration):
-    print("[MOVE] Reverse | duration:", duration)
+    #print("[MOVE] Reverse | duration:", duration)
     motor_left.Reverse()
     motor_right.Reverse()
     sleep(duration)
 
 
-def rotateacw90(motor_left, motor_right, duration=0.8):
+def rotateacw90(motor_left, motor_right, duration=0.9):
     global current_direction
     current_direction -= 1
     current_direction = current_direction % 4
@@ -632,7 +632,7 @@ def rotateacw90(motor_left, motor_right, duration=0.8):
     move_forward(motor_left, motor_right, 0.6)
     motor_left.off()
     motor_right.off()
-    sleep(1)
+    sleep(2)
     motor_right.Forward()
     #print('rr')
     motor_left.Reverse()
@@ -650,7 +650,7 @@ def rotatecw90(motor_left, motor_right, duration=0.8):
     move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
-    sleep(1)
+    sleep(2)
     motor_left.Forward()
     #print('rl')
     motor_right.Reverse()
@@ -659,15 +659,18 @@ def rotatecw90(motor_left, motor_right, duration=0.8):
     motor_right.off()
     motor_left.off()
 
-def u_turn(left_motor, right_motor):
+def u_turn(motor_left, motor_right):
     global current_direction
-    current_direction += 4
+    current_direction += 2
     print("[MOVE] U-turn started")
     left_motor.off()
     right_motor.off()
-    move_back(left_motor, right_motor, 0.5)
-    rotateacw90(left_motor, right_motor)
-    rotateacw90(left_motor, right_motor)
+    #move_back(left_motor, right_motor, 0.5)
+    motor_left.Forward()
+        #print('rl')
+    motor_right.Reverse()
+        #print('rr')
+    sleep(1.7)
     print("[MOVE] U-turn completed")
 
 
@@ -691,19 +694,19 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
   
 def arm_down():
 
-    print("Move to 0°")
+    #print("Move to 0°")
     servo1.set_angle(35)
 
  
 def arm_up30():
 
-    print("Move to 30°")
+    #print("Move to 30°")
     servo1.set_angle(-15)
 
 
 def arm_up90():
 
-    print("Move to 90°")
+    #print("Move to 90°")
     servo1.set_angle(-30)
 
 
@@ -713,17 +716,17 @@ servo_grab = Servo(Pin(15))
 
 def grab_in():
 
-    print("Grab Move to 0°")
-    servo_grab.set_angle(105)
+    #print("Grab Move to 0°")
+    servo_grab.set_angle(120)
 
 def grab_out30():
 
-    print("Grab Move to 30°")
-    servo_grab.set_angle(70)
+    #print("Grab Move to 30°")
+    servo_grab.set_angle(90)
 
 def grab_out60():
 
-    print("Grab Move to 60°")
+    #print("Grab Move to 60°")
     servo_grab.set_angle(-30)
 
 
@@ -1184,6 +1187,7 @@ def perform_turn(turn):
 def collection_detour():
     global grab, box_present, filled_bay
     global need_pick, imminent_next_node
+    print('attempt to collect')
 #MAG     global box_polarity, box_row
     junction_node = prev_node            # the junction we came from (2), not the depot (3)
 #MAG     box_polarity = read_box_polarity()
@@ -1195,7 +1199,7 @@ def collection_detour():
     grab = True
     box_present = True
     filled_bay = False
-
+    sleep(2)
     move_forward(left_motor, right_motor, 0.8)
     u_turn(left_motor, right_motor)
 
@@ -1214,6 +1218,9 @@ def junction_handling():
     prev_node = curr_node
     curr_node = imminent_next_node
     if curr_node in DEPOT_NODES:
+        left_motor.off()
+        right_motor.off()
+        sleep(1)
         collection_detour()
         return
     print(
@@ -1420,15 +1427,15 @@ def line_follow():
         on_box = right_value == 1 and left_value == 1
 
         # Only log unusual sensor patterns to avoid flooding the console.
-        if on_junction or on_box:
-            print(
-                "[SENSOR EVENT] R:", right_value,
-                "L:", left_value,
-                "F:", front_value,
-                "B:", back_value,
-                "| Junction:", on_junction,
-                "| Box:", on_box
-            )
+        #if on_junction or on_box:
+            # print(
+            #     "[SENSOR EVENT] R:", right_value,
+            #     "L:", left_value,
+            #     "F:", front_value,
+            #     "B:", back_value,
+            #     "| Junction:", on_junction,
+            #     "| Box:", on_box
+            # )
 
         if on_junction or on_box:
             junction_reads += 1
