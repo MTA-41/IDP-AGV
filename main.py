@@ -1532,6 +1532,196 @@ def start_amber_flash():
 def stop_amber_flash():
     amber_timer.deinit()
     amber.value(0)
+
+#=======================================================================
+# Distance code
+#+======================================================================
+#DIST # ======================================================================
+#DIST # DISTANCE-SENSOR CHECKS  (VL53L0X on software I2C: SCL = GP17, SDA = GP22)
+#DIST # Enable: Find "#DIST " and Replace with nothing. Keep this block BELOW the
+#DIST # original functions, because it replaces them by redefining them:
+#DIST #   scan_grab, scan_drop, collection_detour, delivery_detour, next_depot
+#DIST # ======================================================================
+#DIST try:
+#DIST     from machine import SoftI2C
+#DIST except ImportError:
+#DIST     SoftI2C = None
+#DIST #
+#DIST DIST_SCL_PIN = 17
+#DIST DIST_SDA_PIN = 22
+#DIST DIST_DEPOT_MM = 40            # box counts as present at or below this distance (depot)
+#DIST DIST_BAY_MM = 40              # bay counts as occupied at or below this distance
+#DIST DIST_SAMPLES = 5              # median of this many readings
+#DIST USE_MAGNET = False            # set True once every #MAG line is uncommented
+#DIST #
+#DIST depot_empty = [False, False, False, False]     # one flag per entry in DEPOT_NODES
+#DIST _dist_sensor = None
+#DIST _dist_failed = False
+#DIST #
+#DIST def _make_i2c():
+#DIST     # GP17 is I2C0's clock but GP22 is I2C1's data, so no hardware bus can use both
+#DIST     if SoftI2C is not None:
+#DIST         return SoftI2C(scl=Pin(DIST_SCL_PIN), sda=Pin(DIST_SDA_PIN), freq=100000)
+#DIST     return I2C(-1, scl=Pin(DIST_SCL_PIN), sda=Pin(DIST_SDA_PIN), freq=100000)
+#DIST #
+#DIST def get_distance_mm():
+#DIST     """One reading in mm (about 8190 = nothing in range), or None if the sensor is unavailable."""
+#DIST     global _dist_sensor, _dist_failed
+#DIST     if _dist_failed:
+#DIST         return None
+#DIST     try:
+#DIST         if _dist_sensor is None:
+#DIST             _dist_sensor = VL53L0X(_make_i2c())
+#DIST             _dist_sensor.start()
+#DIST         return _dist_sensor.read()
+#DIST     except Exception as error:
+#DIST         print("[DIST] Sensor error, checks disabled:", error)
+#DIST         _dist_failed = True
+#DIST         return None
+#DIST #
+#DIST def box_in_range(label, limit):
+#DIST     """True = item within limit mm, False = nothing there, None = sensor unavailable."""
+#DIST     readings = []
+#DIST     for _ in range(DIST_SAMPLES):
+#DIST         d = get_distance_mm()
+#DIST         if d is not None:
+#DIST             readings.append(d)
+#DIST         sleep_ms(10)
+#DIST     if not readings:
+#DIST         print("[DIST] No valid reading for", label)
+#DIST         return None
+#DIST     readings.sort()
+#DIST     d = readings[len(readings) // 2]
+#DIST     print("[DIST]", label, "median:", d, "mm (limit", limit, "mm)")
+#DIST     return d <= limit
+#DIST #
+#DIST def depot_skipped():
+#DIST     """Depot had no box: flag it empty and move the depot pointer on. No collection is recorded."""
+#DIST     global current_depot
+#DIST     i = DEPOT_NODES.index(curr_node)
+#DIST     depot_empty[i] = True
+#DIST     current_depot = (i + 1) % len(DEPOT_NODES)
+#DIST     print("[DEPOT] Empty at node", curr_node, "- flagged empty")
+#DIST #
+#DIST def bay_marked_full():
+#DIST     """Bay already held an item: mark it full so it is never chosen again."""
+#DIST     global active_delivery
+#DIST     if active_delivery is not None:
+#DIST         row, col, node = active_delivery
+#DIST         storage[row][col] = 1
+#DIST         active_delivery = None
+#DIST         print("[DELIVERY] Bay", node, "occupied - marked full")
+#DIST #
+#DIST def next_depot():
+#DIST     """Next depot not flagged empty, starting at current_depot. None if every depot is empty."""
+#DIST     global current_depot
+#DIST     for k in range(len(DEPOT_NODES)):
+#DIST         i = (current_depot + k) % len(DEPOT_NODES)
+#DIST         if not depot_empty[i]:
+#DIST             current_depot = i
+#DIST             print("[TARGET] Next depot:", DEPOT_NODES[i])
+#DIST             return DEPOT_NODES[i]
+#DIST     print("[TARGET] Every depot is flagged empty")
+#DIST     return None
+#DIST #
+#DIST def scan_grab():
+#DIST     """Returns True if a box was grabbed, False if the depot was empty."""
+#DIST     global box_polarity
+#DIST     arm_down()
+#DIST     grab_out60()                                    # arms wide open
+#DIST     print('Scanning for box')
+#DIST     line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
+#DIST     right_motor.off()
+#DIST     left_motor.off()
+#DIST     if box_in_range("depot", DIST_DEPOT_MM) is False:   # None (sensor error) carries on and grabs, as before
+#DIST         print("[DIST] No box at depot - skipping pickup")
+#DIST         return False
+#DIST     if USE_MAGNET:
+#DIST         box_polarity = read_box_polarity()          # magnet scan only once a box is confirmed
+#DIST     print('grab code')
+#DIST     sleep(3)
+#DIST     arm_up90()
+#DIST     grab_out60()
+#DIST     right_motor.off()
+#DIST     left_motor.off()
+#DIST     arm_down()
+#DIST     sleep(1)
+#DIST     grab_in()
+#DIST     sleep(0.5)
+#DIST     arm_up30()
+#DIST     return True
+#DIST #
+#DIST def scan_drop():
+#DIST     """Returns True if the drop was made, False if the bay already holds an item (nothing dropped)."""
+#DIST     print('Scanning for empty space')
+#DIST     line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
+#DIST     right_motor.off()
+#DIST     left_motor.off()
+#DIST     if box_in_range("bay", DIST_BAY_MM) is True:       # None (sensor error) carries on and drops, as before
+#DIST         print("[DIST] Bay already occupied - aborting drop")
+#DIST         return False
+#DIST     print('grab code')
+#DIST     sleep(1)
+#DIST     grab_out30()
+#DIST     sleep(0.5)
+#DIST     move_back(left_motor, right_motor, 0.8)
+#DIST     arm_up90()
+#DIST     return True
+#DIST #
+#DIST def collection_detour():
+#DIST     global grab, box_present, filled_bay
+#DIST     global need_pick, imminent_next_node, target, box_row
+#DIST     print('attempt to collect')
+#DIST     junction_node = prev_node                       # the junction we came from
+#DIST     move_forward(left_motor, right_motor, 0.2)
+#DIST     left_motor.off()
+#DIST     right_motor.off()
+#DIST     if scan_grab():                                 # box confirmed and picked up
+#DIST         if USE_MAGNET:
+#DIST             box_row = choose_bay_row(box_polarity, curr_node)   # curr_node is the depot here
+#DIST             set_box_leds(box_polarity)
+#DIST         arrive_at_target()                          # stop 2 s, record depot, state -> delivery, pick bay
+#DIST         grab = True
+#DIST         box_present = True
+#DIST         filled_bay = False
+#DIST         sleep(2)
+#DIST         move_forward(left_motor, right_motor, 0.8)
+#DIST     else:                                           # empty depot: state and storage untouched
+#DIST         arm_up90()
+#DIST         grab_out60()
+#DIST         depot_skipped()
+#DIST         target = pick_target()                      # state is still "to depot" -> next non-empty depot
+#DIST     u_turn(left_motor, right_motor)
+#DIST     if not line_follow_until_return_t():
+#DIST         halt("Failed to return to depot junction")
+#DIST         return
+#DIST     need_pick = False
+#DIST     imminent_next_node = junction_node
+#DIST     junction_handling()
+#DIST #
+#DIST def delivery_detour(bay_node, return_node):
+#DIST     global need_pick, imminent_next_node, target
+#DIST     global grab, box_present, filled_bay, box_polarity, box_row
+#DIST     if scan_drop():                                 # bay was free, box dropped
+#DIST         if USE_MAGNET:
+#DIST             set_box_leds(None)
+#DIST             box_polarity = None
+#DIST             box_row = None
+#DIST         arrive_at_target()                          # 2 s stop, record delivery, state -> to home, target -> 0
+#DIST         u_turn(left_motor, right_motor)
+#DIST         if not line_follow_until_return_t():
+#DIST             halt("Failed to detect return junction")
+#DIST             return
+#DIST         grab, box_present, filled_bay = False, False, True
+#DIST     else:                                           # bay occupied: abort, still carrying the box
+#DIST         bay_marked_full()
+#DIST         u_turn(left_motor, right_motor)
+#DIST         if not line_follow_until_return_t():
+#DIST             halt("Failed to detect return junction")
+#DIST             return
+#DIST         target = pick_target()                      # state is still "delivery" -> next free bay
+#DIST     need_pick = False
+#DIST     imminent_next_node = return_node
 # ======================================================================
 # MAIN
 # ======================================================================
