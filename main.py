@@ -542,6 +542,7 @@ forward, backward, left, right = (
 SCAN_GRAB_FOLLOW_MS = 750
 STOP_SECONDS = 2
 SCAN_DROP_FOLLOW_MS = 3200
+SCAN_DROP_FOLLOW_TOP_MS = 2400
 JUNCTION_CONFIRM = 3
 JUNCTION_CLEAR = 20
 BOX_CONFIRM = 3
@@ -591,7 +592,10 @@ active_delivery = None
 
 DEPOT_NODES = [3, 20, 5, 22]
 
-
+def drop_follow_ms():
+    if active_delivery is not None and active_delivery[0] >= 2:
+        return SCAN_DROP_FOLLOW_TOP_MS
+    return SCAN_DROP_FOLLOW_MS
 # ======================================================================
 # MOTOR MOVEMENT FUNCTIONS
 # ======================================================================
@@ -796,7 +800,7 @@ def scan_drop():
     #grab_in()
     #print('Scanning for empty space')
     scan = True
-    line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
+    line_follow_for_ms(drop_follow_ms)
 
 
 ### DISTANCE TO BOX ###
