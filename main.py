@@ -35,7 +35,7 @@ def get_polarity(sensor):
     """Print the detected output polarity every two seconds, continuously."""
     while True:
         polarity, value = sensor.polarity()
-        #print("Polarity: {} (ADC: {})".format(polarity, value))
+        print("Polarity: {} (ADC: {})".format(polarity, value))
         sleep(2)
 
 
@@ -460,7 +460,7 @@ class Button:
 
         # Count exactly one click
         self.click_count += 1
-        #print("[BUTTON] Click count:", self.click_count)
+        print("[BUTTON] Click count:", self.click_count)
 
         # Wait for release before accepting another click
         while self.pin.value() == 1:
@@ -477,8 +477,8 @@ class Button:
 # COMPONENTS
 # ======================================================================
 button = Button(pin=11, debounce_ms=30)
-right_light_sensor = Pin(12, Pin.IN)
-left_light_sensor = Pin(20, Pin.IN)
+right_light_sensor = Pin(20, Pin.IN)
+left_light_sensor = Pin(18, Pin.IN)
 front_light_sensor = Pin(19, Pin.IN)
 back_light_sensor = Pin(21, Pin.IN)
 
@@ -486,7 +486,7 @@ left_motor = Motor(dirPin=4, PWMPin=5)
 right_motor = Motor(dirPin=7, PWMPin=6)
 
 magnetometer = DRV5055(pin=26)
-
+servo1 = Servo(Pin(13))
 
 red_led = Pin(9, Pin.OUT)      # on while carrying a NEGATIVE box (top level)
 green_led = Pin(10, Pin.OUT)    # on while carrying a POSITIVE box (bottom level)
@@ -662,7 +662,7 @@ def rotatecw90(motor_left, motor_right, duration=0.8):
 def u_turn(motor_left, motor_right):
     global current_direction
     current_direction += 2
-    #print("[MOVE] U-turn started")
+    print("[MOVE] U-turn started")
     left_motor.off()
     right_motor.off()
     #move_back(left_motor, right_motor, 0.5)
@@ -671,11 +671,11 @@ def u_turn(motor_left, motor_right):
     motor_right.Reverse()
         #print('rr')
     sleep(1.7)
-    #print("[MOVE] U-turn completed")
+    print("[MOVE] U-turn completed")
 
 
 def stop_and_wait():
-    #print("[MOVE] Stop for", STOP_SECONDS, "seconds")
+    print("[MOVE] Stop for", STOP_SECONDS, "seconds")
     left_motor.off()
     right_motor.off()
     sleep(STOP_SECONDS)
@@ -691,25 +691,23 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
         forward_sensor.value(),
         backward_sensor.value()
     ]
-
-servo1 = Servo(Pin(13)) 
-
+  
 def arm_down():
 
     #print("Move to 0°")
-    servo1.set_angle(20)
+    servo1.set_angle(25)
 
  
 def arm_up30():
 
     #print("Move to 30°")
-    servo1.set_angle(0)
+    servo1.set_angle(-80)
 
 
 def arm_up90():
 
     #print("Move to 90°")
-    servo1.set_angle(-50)
+    servo1.set_angle(-90)
 
 
 
@@ -719,7 +717,7 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     #print("Grab Move to 0°")
-    servo_grab.set_angle(115)
+    servo_grab.set_angle(135)
 
 def grab_out30():
 
@@ -729,7 +727,7 @@ def grab_out30():
 def grab_out60():
 
     #print("Grab Move to 60°")
-    servo_grab.set_angle(35)
+    servo_grab.set_angle(-30)
 
 
 
@@ -753,7 +751,7 @@ def line_follow_step():
 def scan_grab():
     arm_down()
     grab_out60()
-    #print('Scanning for box')
+    print('Scanning for box')
     scan = True
 
 ### DISTANCE TO BOX ###
@@ -763,7 +761,7 @@ def scan_grab():
         line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
-        #print('grab code')
+        print('grab code')
         sleep(3)
         arm_up90()
         grab_out60()
@@ -796,7 +794,7 @@ def line_follow_for_ms(duration_ms):
 def scan_drop():
     #arm_down()
     #grab_in()
-    #print('Scanning for empty space')
+    print('Scanning for empty space')
     scan = True
     line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
 
@@ -808,7 +806,7 @@ def scan_drop():
         #line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
-        #print('grab code')
+        print('grab code')
         #sleep(3)
         #arm_down()
         sleep(1)
@@ -839,7 +837,7 @@ def test_vl53l0x():
     while True:
         vl53l0.start()
         for _ in range(10):
-            #print(vl53l0.read(), "mm")
+            print(vl53l0.read(), "mm")
             sleep(0.5)
         vl53l0.stop()
 
@@ -916,14 +914,14 @@ current_direction = 0 #0 = forward, 1 = right, 2 = backward, 3 = left
 # PATH FINDING AND TURN DECISIONS
 # ======================================================================
 def find_path(graph, curr_node, target):
-    #print("[PATH] Searching:", curr_node, "->", target)
+    print("[PATH] Searching:", curr_node, "->", target)
 
     if curr_node not in graph or target not in graph:
-        #print("[PATH ERROR] Start or target missing from graph")
+        print("[PATH ERROR] Start or target missing from graph")
         return None
 
     if curr_node == target:
-        #print("[PATH] Already at target")
+        print("[PATH] Already at target")
         return [curr_node]
 
     parents = {curr_node: None}
@@ -946,12 +944,12 @@ def find_path(graph, curr_node, target):
                 while parents[path[-1]] is not None:
                     path.append(parents[path[-1]])
                 path.reverse()
-                #print("[PATH] Found:", path)
+                print("[PATH] Found:", path)
                 return path
 
             queue.append(neighbour)
 
-    #print("[PATH ERROR] No path found")
+    print("[PATH ERROR] No path found")
     return None
 
 
@@ -959,10 +957,10 @@ def next_node(graph, current, target):
     path = find_path(graph, current, target)
 
     if path is None or len(path) < 2:
-        #print("[PATH] No next node")
+        print("[PATH] No next node")
         return None
 
-    #print("[PATH] Next node:", path[1])
+    print("[PATH] Next node:", path[1])
     return path[1]
 
 
@@ -1017,7 +1015,7 @@ def turn_needed(prev, curr, nxt):
             break
 
     if next_direction is None:
-        #print("[TURN ERROR] Next node is not connected to current node")
+        print("[TURN ERROR] Next node is not connected to current node")
         raise ValueError("Next node is not connected to current node")
 
     # Compare the absolute direction with the robot's current orientation.
@@ -1036,7 +1034,7 @@ def turn_needed(prev, curr, nxt):
 # ======================================================================
 def next_depot():
     node = DEPOT_NODES[current_depot]
-    #print("[TARGET] Next depot:", node)
+    print("[TARGET] Next depot:", node)
     return node
 
 
@@ -1071,15 +1069,15 @@ def next_delivery_bay():
 
             delivery_cursor = (cell + 1) % total_cells
 
-            # print(
-            #     "[DELIVERY] Selected node:", node,
-            #     "| Row:", depot_index,
-            #     "| Column:", storage_index
-            # )
+            print(
+                "[DELIVERY] Selected node:", node,
+                "| Row:", depot_index,
+                "| Column:", storage_index
+            )
             return node
 
     active_delivery = None
-    #print("[DELIVERY ERROR] All bays are full")
+    print("[DELIVERY ERROR] All bays are full")
     return None
 
 
@@ -1087,15 +1085,15 @@ def delivery_completed():
     global active_delivery
 
     if active_delivery is None:
-        #print("[DELIVERY WARNING] No active delivery")
+        print("[DELIVERY WARNING] No active delivery")
         return False
 
     depot_index, storage_index, node = active_delivery
     storage[depot_index][storage_index] = 1
     active_delivery = None
 
-    #print("[DELIVERY] Completed at node:", node)
-    #print("[DELIVERY] Storage:", storage)
+    print("[DELIVERY] Completed at node:", node)
+    print("[DELIVERY] Storage:", storage)
     return True
 
 
@@ -1111,11 +1109,11 @@ def update_state_machine():
     elif state == "to home":
         state = "to depot"
 
-    #print("[STATE]", old_state, "->", state)
+    print("[STATE]", old_state, "->", state)
 
 
 def pick_target():
-    #print("[TARGET] Picking target for state:", state)
+    print("[TARGET] Picking target for state:", state)
 
     if state == "to depot":
         return next_depot()
@@ -1124,10 +1122,10 @@ def pick_target():
         return next_delivery_bay()
 
     if state == "to home":
-        #print("[TARGET] Home node: 0")
+        print("[TARGET] Home node: 0")
         return 0
 
-    #print("[TARGET ERROR] Unknown state:", state)
+    print("[TARGET ERROR] Unknown state:", state)
     return None
 
 
@@ -1137,7 +1135,7 @@ def pick_target():
 def arrive_at_target():
     global target
 
-    #print("[ARRIVAL] Reached target:", target, "| State:", state)
+    print("[ARRIVAL] Reached target:", target, "| State:", state)
 
     if state == "to depot":
         stop_and_wait()
@@ -1149,13 +1147,13 @@ def arrive_at_target():
         # Release the box here.
         delivery_completed()
 
-    # elif state == "to home":
-    #     print("[HOME] Returned to start node")
+    elif state == "to home":
+        print("[HOME] Returned to start node")
 
     update_state_machine()
     target = pick_target()
 
-    #print("[TARGET] New target:", target)
+    print("[TARGET] New target:", target)
 
 
 def halt(reason):
@@ -1165,7 +1163,7 @@ def halt(reason):
     right_motor.off()
     halted = True
 
-    #print("[HALT]", reason)
+    print("[HALT]", reason)
 
 
 def perform_turn(turn):
@@ -1175,7 +1173,7 @@ def perform_turn(turn):
         halt("Invalid turn decision: " + str(turn))
         return
 
-    #print("[MOVEMENT DECISION] Executing:", names[turn])
+    print("[MOVEMENT DECISION] Executing:", names[turn])
 
     if turn == 0:
         move_forward(left_motor, right_motor, 0.01)
@@ -1189,7 +1187,7 @@ def perform_turn(turn):
 def collection_detour():
     global grab, box_present, filled_bay
     global need_pick, imminent_next_node
-    #print('attempt to collect')
+    print('attempt to collect')
 #MAG     global box_polarity, box_row
     junction_node = prev_node            # the junction we came from (2), not the depot (3)
 #MAG     box_polarity = read_box_polarity()
@@ -1228,24 +1226,24 @@ def junction_handling():
         sleep(1)
         collection_detour()
         return
-    # print(
-    #     "\n[NODE] Current:", curr_node,
-    #     "| Previous:", prev_node,
-    #     "| State:", state
-    # )
+    print(
+        "\n[NODE] Current:", curr_node,
+        "| Previous:", prev_node,
+        "| State:", state
+    )
 
     if need_pick:
         target = pick_target()
         need_pick = False
 
-    #print("[NAVIGATION] Target:", target)
+    print("[NAVIGATION] Target:", target)
 
     if target is None:
         halt("No target available; delivery bays may be full")
         return
 
     if curr_node == target:
-        #print("[NAVIGATION] Target reached")
+        print("[NAVIGATION] Target reached")
         arrive_at_target()
 
     if target is None:
@@ -1263,10 +1261,10 @@ def junction_handling():
 
     imminent_next_node = following
 
-    # print(
-    #     "[NAVIGATION] Planned edge:",
-    #     curr_node, "->", imminent_next_node
-    # )
+    print(
+        "[NAVIGATION] Planned edge:",
+        curr_node, "->", imminent_next_node
+    )
 
     try:
         turn = turn_needed(
@@ -1356,7 +1354,7 @@ def line_follow_until_return_t():
             box_reads = 0
             bay_armed = True
 
-            #print("[DELIVERY] Return junction detected")
+            print("[DELIVERY] Return junction detected")
             return True
 
         # Follow the line using the existing sensor behaviour.
@@ -1456,8 +1454,7 @@ def line_follow():
 
         if clear_reads >= JUNCTION_CLEAR:
             if not junction_armed or not box_armed:
-                pass
-                #print("[SENSOR] Junction cleared; rearming detectors")
+                print("[SENSOR] Junction cleared; rearming detectors")
 
             junction_armed = True
             box_armed = True
@@ -1474,7 +1471,6 @@ def line_follow():
             and front_value == 1
         ):
             move_forward(left_motor, right_motor, 0.001)
-            print('f')
 
         elif (
             right_value == 1
@@ -1482,7 +1478,6 @@ def line_follow():
             and front_value == 0
         ):
             turn_right(left_motor, right_motor, 0.001)
-            print('r')
 
         elif (
             right_value == 0
@@ -1490,18 +1485,16 @@ def line_follow():
             and front_value == 0
         ):
             turn_left(left_motor, right_motor, 0.001)
-            print('l')
 
         elif on_junction:
             if junction_armed and junction_reads >= JUNCTION_CONFIRM:
                 junction_armed = False
                 box_armed = False
 
-                # print(
-                #     "[EVENT] Junction confirmed after",
-                #     junction_reads, "reads"
-                # )
-                print("junction")
+                print(
+                    "[EVENT] Junction confirmed after",
+                    junction_reads, "reads"
+                )
                 return True
 
             move_forward(left_motor, right_motor, 0.001)
@@ -1511,10 +1504,10 @@ def line_follow():
                 box_armed = False
                 junction_armed = False
 
-                # print(
-                #     "[EVENT] Box/T pattern confirmed after",
-                #     box_reads, "reads"
-                # )
+                print(
+                    "[EVENT] Box/T pattern confirmed after",
+                    box_reads, "reads"
+                )
                 return True
 
             move_forward(left_motor, right_motor, 0.001)
@@ -1737,12 +1730,9 @@ def main():
 
     print("[NAVIGATION] Waiting for initial board event")
 
-    button_on = True
+    button_on = False
     arm_up90()
     grab_out60()
-    sleep(2)
-    #move_forward(left_motor, right_motor, 0.5)
-    #grab_in()
     
     while not halted:
 
@@ -1752,22 +1742,22 @@ def main():
                 start_amber_flash()
             else:
                 stop_amber_flash()
-            #print("[BUTTON] State:", "ON" if button_on else "OFF")
+            print("[BUTTON] State:", "ON" if button_on else "OFF")
             #start_amber_flash()
 
-        #if button_on:
-        event_detected = line_follow()
+        if button_on:
+            event_detected = line_follow()
 
-        if event_detected:
-            junction_handling()
-        # else:
-        #     left_motor.off()
-        #     right_motor.off()
-        #     sleep_ms(10)
+            if event_detected:
+                junction_handling()
+        else:
+            left_motor.off()
+            right_motor.off()
+            sleep_ms(10)
 
     left_motor.off()
     right_motor.off()
-    #print("[NAVIGATION] Stopped")
+    print("[NAVIGATION] Stopped")
 
 if __name__ == "__main__":
     try:
@@ -1775,5 +1765,5 @@ if __name__ == "__main__":
     except Exception as error:
         left_motor.off()
         right_motor.off()
-        #print("[ERROR]", error)
+        print("[ERROR]", error)
         raise
