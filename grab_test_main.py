@@ -1459,7 +1459,7 @@ amber = amber(pin = 8)
 #green = green(pin = 8)
 
 button = Button(pin = 17)
-clicks = 0
+#clicks = 0
 if button.was_clicked():
     clicks+=1
     print('clicked')
@@ -1467,6 +1467,8 @@ if button.was_clicked():
 
 
 go = True
+clicks = 1
+print('go')
 while go == True:
     junction_num == 0
     arm_up90()

@@ -3,7 +3,7 @@ from time import sleep_ms
 
 
 class Button:
-    def __init__(self, pin=10, debounce_ms=30):
+    def __init__(self, pin=11, debounce_ms=30):
         #17
         # Project wiring uses a pull-down: released = 0, pressed = 1.
         self.pin = Pin(pin, Pin.IN, Pin.PULL_DOWN)
@@ -35,5 +35,5 @@ def get_clicks(button):
             print(f"Button clicked: {clicks}")
 
 
-button = Button(pin=10)
+button = Button(pin=11)
 get_clicks(button)

@@ -1025,10 +1025,10 @@ def turn_needed(prev, curr, nxt):
 
     names = ["STRAIGHT", "RIGHT", "U-TURN", "LEFT"]
 
-    # print(
-    #     "[TURN] Required absolute direction:", ORDER[next_direction],
-    #     "| Decision:", names[turn]
-    # )
+    print(
+        "[TURN] Required absolute direction:", ORDER[next_direction],
+        "| Decision:", names[turn]
+    )
 
     return turn
 # ======================================================================
@@ -1474,6 +1474,7 @@ def line_follow():
             and front_value == 1
         ):
             move_forward(left_motor, right_motor, 0.001)
+            print('f')
 
         elif (
             right_value == 1
@@ -1481,6 +1482,7 @@ def line_follow():
             and front_value == 0
         ):
             turn_right(left_motor, right_motor, 0.001)
+            print('r')
 
         elif (
             right_value == 0
@@ -1488,6 +1490,7 @@ def line_follow():
             and front_value == 0
         ):
             turn_left(left_motor, right_motor, 0.001)
+            print('l')
 
         elif on_junction:
             if junction_armed and junction_reads >= JUNCTION_CONFIRM:
@@ -1498,6 +1501,7 @@ def line_follow():
                 #     "[EVENT] Junction confirmed after",
                 #     junction_reads, "reads"
                 # )
+                print("junction")
                 return True
 
             move_forward(left_motor, right_motor, 0.001)
@@ -1733,11 +1737,11 @@ def main():
 
     print("[NAVIGATION] Waiting for initial board event")
 
-    button_on = False
+    button_on = True
     arm_up90()
     grab_out60()
     sleep(2)
-    move_forward(left_motor, right_motor, 0.5)
+    #move_forward(left_motor, right_motor, 0.5)
     #grab_in()
     
     while not halted:
@@ -1751,15 +1755,15 @@ def main():
             #print("[BUTTON] State:", "ON" if button_on else "OFF")
             #start_amber_flash()
 
-        if button_on:
-            event_detected = line_follow()
+        #if button_on:
+        event_detected = line_follow()
 
-            if event_detected:
-                junction_handling()
-        else:
-            left_motor.off()
-            right_motor.off()
-            sleep_ms(10)
+        if event_detected:
+            junction_handling()
+        # else:
+        #     left_motor.off()
+        #     right_motor.off()
+        #     sleep_ms(10)
 
     left_motor.off()
     right_motor.off()
