@@ -589,7 +589,7 @@ current_depot = 0
 delivery_cursor = 0
 active_delivery = None
 
-DEPOT_NODES = [3, 5, 20, 22]
+DEPOT_NODES = [3, 20, 5, 22]
 
 
 # ======================================================================
@@ -641,7 +641,7 @@ def rotateacw90(motor_left, motor_right, duration=0.9):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.8):
+def rotatecw90(motor_left, motor_right, duration=0.7):
     global current_direction
     current_direction += 1
     current_direction = current_direction % 4
@@ -695,13 +695,13 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
 def arm_down():
 
     #print("Move to 0°")
-    servo1.set_angle(25)
+    servo1.set_angle(30)
 
  
 def arm_up30():
 
     #print("Move to 30°")
-    servo1.set_angle(-80)
+    servo1.set_angle(15)
 
 
 def arm_up90():
@@ -717,12 +717,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     #print("Grab Move to 0°")
-    servo_grab.set_angle(135)
+    servo_grab.set_angle(85)
 
 def grab_out30():
 
     #print("Grab Move to 30°")
-    servo_grab.set_angle(100)
+    servo_grab.set_angle(60)
 
 def grab_out60():
 
@@ -1176,7 +1176,7 @@ def perform_turn(turn):
     print("[MOVEMENT DECISION] Executing:", names[turn])
 
     if turn == 0:
-        move_forward(left_motor, right_motor, 0.01)
+        move_forward(left_motor, right_motor, 0.1)
     elif turn == 1:
         rotatecw90(left_motor, right_motor)
     elif turn == 2:
@@ -1277,6 +1277,7 @@ def junction_handling():
         return
 
     perform_turn(turn)
+
 
     # If the planned edge enters the selected delivery bay,
     # perform the delivery detour immediately after turning into it.
@@ -1733,6 +1734,12 @@ def main():
     button_on = False
     arm_up90()
     grab_out60()
+    # sleep(1)
+    # arm_down()
+    # grab_in()
+    # sleep(1)
+    # grab_out30()
+    # sleep(3)
     
     while not halted:
 
@@ -1745,15 +1752,15 @@ def main():
             print("[BUTTON] State:", "ON" if button_on else "OFF")
             #start_amber_flash()
 
-        if button_on:
-            event_detected = line_follow()
+        #if button_on:
+        event_detected = line_follow()
 
-            if event_detected:
-                junction_handling()
-        else:
-            left_motor.off()
-            right_motor.off()
-            sleep_ms(10)
+        if event_detected:
+            junction_handling()
+        # else:
+        #     left_motor.off()
+        #     right_motor.off()
+        #     sleep_ms(10)
 
     left_motor.off()
     right_motor.off()
