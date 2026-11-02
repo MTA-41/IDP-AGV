@@ -32,10 +32,10 @@ class DRV5055:
 
 
 def get_polarity(sensor):
-    """Print the detected output polarity every two seconds, continuously."""
+    """#print the detected output polarity every two seconds, continuously."""
     while True:
         polarity, value = sensor.polarity()
-        print("Polarity: {} (ADC: {})".format(polarity, value))
+        #print("Polarity: {} (ADC: {})".format(polarity, value))
         sleep(2)
 
 
@@ -460,7 +460,7 @@ class Button:
 
         # Count exactly one click
         self.click_count += 1
-        print("[BUTTON] Click count:", self.click_count)
+        #print("[BUTTON] Click count:", self.click_count)
 
         # Wait for release before accepting another click
         while self.pin.value() == 1:
@@ -485,7 +485,7 @@ back_light_sensor = Pin(21, Pin.IN)
 left_motor = Motor(dirPin=4, PWMPin=5)
 right_motor = Motor(dirPin=7, PWMPin=6)
 
-magnetometer = DRV5055(pin=26)
+magnetometer = DRV5055(pin=27) # should be 26 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 servo1 = Servo(Pin(13))
 
 red_led = Pin(9, Pin.OUT)      # on while carrying a NEGATIVE box (top level)
@@ -495,42 +495,42 @@ RIGHT_DEPOT_NODES = {3, 5}      # 20 and 22 are the left-side depots
 box_polarity = None             # "positive", "negative" or None
 box_row = None                  # row of DELIVERY_BAYS/storage for the held box
 
-#MAG def set_box_leds(polarity):
-#MAG     red_led.value(1 if polarity == "negative" else 0)
-#MAG     green_led.value(1 if polarity == "positive" else 0)
-#MAG
-#MAG set_box_leds(None)               # both off at startup
-#MAG
-#MAG def read_box_polarity():
-#MAG     """Average 10 ADC samples so one noisy read can't misclassify the box."""
-#MAG     total = 0
-#MAG     for _ in range(10):
-#MAG         total += magnetometer.read()
-#MAG         sleep_ms(5)
-#MAG     difference = total // 10 - magnetometer.zero_field
-#MAG     if difference > magnetometer.deadband:
-#MAG         return "positive"
-#MAG     if difference < -magnetometer.deadband:
-#MAG         return "negative"
-#MAG     return None                  # no magnet: treated as bottom level, no LED
-#MAG
-#MAG def choose_bay_row(polarity, depot_node):
-#MAG     right = depot_node in RIGHT_DEPOT_NODES
-#MAG     if polarity == "negative":   # top level
-#MAG         return 3 if right else 2
-#MAG     return 0 if right else 1     # positive (or non-magnetic): bottom level
-#MAG
-#MAG def next_bay_in_row(row):
-#MAG     global active_delivery
-#MAG     for col in range(len(storage[row])):
-#MAG         if storage[row][col] == 0:
-#MAG             node = DELIVERY_BAYS[row][col]
-#MAG             active_delivery = (row, col, node)
-#MAG             print("[DELIVERY] Magnetic sort -> row", row, "node", node)
-#MAG             return node
-#MAG     active_delivery = None
-#MAG     print("[DELIVERY ERROR] Row", row, "is full")
-#MAG     return None
+def set_box_leds(polarity):
+    red_led.value(1 if polarity == "negative" else 0)
+    green_led.value(1 if polarity == "positive" else 0)
+
+set_box_leds(None)               # both off at startup
+
+def read_box_polarity():
+    """Average 10 ADC samples so one noisy read can't misclassify the box."""
+    total = 0
+    for _ in range(10):
+        total += magnetometer.read()
+        sleep_ms(5)
+    difference = total // 10 - magnetometer.zero_field
+    if difference > magnetometer.deadband:
+        return "positive"
+    if difference < -magnetometer.deadband:
+        return "negative"
+    return None                  # no magnet: treated as bottom level, no LED
+
+def choose_bay_row(polarity, depot_node):
+    right = depot_node in RIGHT_DEPOT_NODES
+    if polarity == "negative":   # top level
+        return 3 if right else 2
+    return 0 if right else 1     # positive (or non-magnetic): bottom level
+
+def next_bay_in_row(row):
+    global active_delivery
+    for col in range(len(storage[row])):
+        if storage[row][col] == 0:
+            node = DELIVERY_BAYS[row][col]
+            active_delivery = (row, col, node)
+            ##print("[DELIVERY] Magnetic sort -> row", row, "node", node)
+            return node
+    active_delivery = None
+    #print("[DELIVERY ERROR] Row", row, "is full")
+    return None
 
 # ======================================================================
 # SETTINGS AND STATE
@@ -541,7 +541,7 @@ forward, backward, left, right = (
 
 SCAN_GRAB_FOLLOW_MS = 750
 STOP_SECONDS = 2
-SCAN_DROP_FOLLOW_MS = 3400
+SCAN_DROP_FOLLOW_MS = 3200
 JUNCTION_CONFIRM = 3
 JUNCTION_CLEAR = 20
 BOX_CONFIRM = 3
@@ -596,28 +596,28 @@ DEPOT_NODES = [3, 20, 5, 22]
 # MOTOR MOVEMENT FUNCTIONS
 # ======================================================================
 def move_forward(motor_left, motor_right, duration):
-    #print("[MOVE] Forward | duration:", duration)
+    ##print("[MOVE] Forward | duration:", duration)
     motor_left.Forward()
     motor_right.Forward()
     sleep(duration)
 
 
 def turn_left(motor_left, motor_right, duration):
-    #print("[MOVE] Line correction left | duration:", duration)
+    ##print("[MOVE] Line correction left | duration:", duration)
     motor_left.off()
     motor_right.Forward()
     sleep(duration)
 
 
 def turn_right(motor_left, motor_right, duration):
-    #print("[MOVE] Line correction right | duration:", duration)
+    ##print("[MOVE] Line correction right | duration:", duration)
     motor_right.off()
     motor_left.Forward()
     sleep(duration)
 
 
 def move_back(motor_left, motor_right, duration):
-    #print("[MOVE] Reverse | duration:", duration)
+    ##print("[MOVE] Reverse | duration:", duration)
     motor_left.Reverse()
     motor_right.Reverse()
     sleep(duration)
@@ -634,9 +634,9 @@ def rotateacw90(motor_left, motor_right, duration=0.9):
     motor_right.off()
     sleep(2)
     motor_right.Forward()
-    #print('rr')
+    ##print('rr')
     motor_left.Reverse()
-    #print('rl')
+    ##print('rl')
     sleep(duration)                 # CHANGED: the rotation never waited, so it never turned
     motor_right.off()
     motor_left.off()
@@ -652,9 +652,9 @@ def rotatecw90(motor_left, motor_right, duration=0.7):
     motor_left.off()
     sleep(2)
     motor_left.Forward()
-    #print('rl')
+    ##print('rl')
     motor_right.Reverse()
-    #print('rr')
+    ##print('rr')
     sleep(duration)                 # CHANGED: same fix as above
     motor_right.off()
     motor_left.off()
@@ -662,20 +662,20 @@ def rotatecw90(motor_left, motor_right, duration=0.7):
 def u_turn(motor_left, motor_right):
     global current_direction
     current_direction += 2
-    print("[MOVE] U-turn started")
+    #print("[MOVE] U-turn started")
     left_motor.off()
     right_motor.off()
     #move_back(left_motor, right_motor, 0.5)
     motor_left.Forward()
-        #print('rl')
+        ##print('rl')
     motor_right.Reverse()
-        #print('rr')
+        ##print('rr')
     sleep(1.7)
-    print("[MOVE] U-turn completed")
+    #print("[MOVE] U-turn completed")
 
 
 def stop_and_wait():
-    print("[MOVE] Stop for", STOP_SECONDS, "seconds")
+    #print("[MOVE] Stop for", STOP_SECONDS, "seconds")
     left_motor.off()
     right_motor.off()
     sleep(STOP_SECONDS)
@@ -694,19 +694,19 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
   
 def arm_down():
 
-    #print("Move to 0°")
+    ##print("Move to 0°")
     servo1.set_angle(30)
 
  
 def arm_up30():
 
-    #print("Move to 30°")
+    ##print("Move to 30°")
     servo1.set_angle(15)
 
 
 def arm_up90():
 
-    #print("Move to 90°")
+    ##print("Move to 90°")
     servo1.set_angle(-90)
 
 
@@ -716,17 +716,17 @@ servo_grab = Servo(Pin(15))
 
 def grab_in():
 
-    #print("Grab Move to 0°")
+    ##print("Grab Move to 0°")
     servo_grab.set_angle(85)
 
 def grab_out30():
 
-    #print("Grab Move to 30°")
+    ##print("Grab Move to 30°")
     servo_grab.set_angle(60)
 
 def grab_out60():
 
-    #print("Grab Move to 60°")
+    ##print("Grab Move to 60°")
     servo_grab.set_angle(-30)
 
 
@@ -737,21 +737,21 @@ def line_follow_step():
      
     # ----- driving -----
     if right == 0 and left == 0 and front == 1:
-        #print('f')
+        ##print('f')
         move_forward(left_motor, right_motor, 0.001)
     
     elif right == 1 and left == 0 and front == 0:
-        #print('r')
+        ##print('r')
         turn_right(left_motor, right_motor, 0.001)
     
     elif right == 0 and left == 1 and front == 0:
-        #print('l')
+        ##print('l')
         turn_left(left_motor, right_motor, 0.001)
 
 def scan_grab():
     arm_down()
     grab_out60()
-    print('Scanning for box')
+    #print('Scanning for box')
     scan = True
 
 ### DISTANCE TO BOX ###
@@ -761,7 +761,7 @@ def scan_grab():
         line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
-        print('grab code')
+        #print('grab code')
         sleep(3)
         arm_up90()
         grab_out60()
@@ -794,7 +794,7 @@ def line_follow_for_ms(duration_ms):
 def scan_drop():
     #arm_down()
     #grab_in()
-    print('Scanning for empty space')
+    #print('Scanning for empty space')
     scan = True
     line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
 
@@ -806,7 +806,7 @@ def scan_drop():
         #line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
-        print('grab code')
+        #print('grab code')
         #sleep(3)
         #arm_down()
         sleep(1)
@@ -837,7 +837,7 @@ def test_vl53l0x():
     while True:
         vl53l0.start()
         for _ in range(10):
-            print(vl53l0.read(), "mm")
+            #print(vl53l0.read(), "mm")
             sleep(0.5)
         vl53l0.stop()
 
@@ -914,14 +914,14 @@ current_direction = 0 #0 = forward, 1 = right, 2 = backward, 3 = left
 # PATH FINDING AND TURN DECISIONS
 # ======================================================================
 def find_path(graph, curr_node, target):
-    print("[PATH] Searching:", curr_node, "->", target)
+    #print("[PATH] Searching:", curr_node, "->", target)
 
     if curr_node not in graph or target not in graph:
-        print("[PATH ERROR] Start or target missing from graph")
+        #print("[PATH ERROR] Start or target missing from graph")
         return None
 
     if curr_node == target:
-        print("[PATH] Already at target")
+        #print("[PATH] Already at target")
         return [curr_node]
 
     parents = {curr_node: None}
@@ -944,12 +944,12 @@ def find_path(graph, curr_node, target):
                 while parents[path[-1]] is not None:
                     path.append(parents[path[-1]])
                 path.reverse()
-                print("[PATH] Found:", path)
+                #print("[PATH] Found:", path)
                 return path
 
             queue.append(neighbour)
 
-    print("[PATH ERROR] No path found")
+    #print("[PATH ERROR] No path found")
     return None
 
 
@@ -957,10 +957,10 @@ def next_node(graph, current, target):
     path = find_path(graph, current, target)
 
     if path is None or len(path) < 2:
-        print("[PATH] No next node")
+        #print("[PATH] No next node")
         return None
 
-    print("[PATH] Next node:", path[1])
+    #print("[PATH] Next node:", path[1])
     return path[1]
 
 
@@ -992,11 +992,11 @@ def turn_needed(prev, curr, nxt):
     2 = U-turn
     3 = left
     """
-    print(
-        "[TURN] Current node:", curr,
-        "| Next node:", nxt,
-        "| Current direction:", current_direction
-    )
+    #print(
+    #     "[TURN] Current node:", curr,
+    #     "| Next node:", nxt,
+    #     "| Current direction:", current_direction
+    # )
 
     if curr not in board_graph:
         raise ValueError("Current node is not in the board graph")
@@ -1015,7 +1015,7 @@ def turn_needed(prev, curr, nxt):
             break
 
     if next_direction is None:
-        print("[TURN ERROR] Next node is not connected to current node")
+        #print("[TURN ERROR] Next node is not connected to current node")
         raise ValueError("Next node is not connected to current node")
 
     # Compare the absolute direction with the robot's current orientation.
@@ -1023,10 +1023,10 @@ def turn_needed(prev, curr, nxt):
 
     names = ["STRAIGHT", "RIGHT", "U-TURN", "LEFT"]
 
-    print(
-        "[TURN] Required absolute direction:", ORDER[next_direction],
-        "| Decision:", names[turn]
-    )
+    #print(
+    #     "[TURN] Required absolute direction:", ORDER[next_direction],
+    #     "| Decision:", names[turn]
+    # )
 
     return turn
 # ======================================================================
@@ -1034,25 +1034,25 @@ def turn_needed(prev, curr, nxt):
 # ======================================================================
 def next_depot():
     node = DEPOT_NODES[current_depot]
-    print("[TARGET] Next depot:", node)
+    #print("[TARGET] Next depot:", node)
     return node
 
 
 def depot_collected():
     global current_depot
 
-    print("[DEPOT] Collection recorded at:", DEPOT_NODES[current_depot])
+    #print("[DEPOT] Collection recorded at:", DEPOT_NODES[current_depot])
     current_depot = (current_depot + 1) % len(DEPOT_NODES)
-    print("[DEPOT] Next depot index:", current_depot)
+    #print("[DEPOT] Next depot index:", current_depot)
 
 
 def next_delivery_bay():
     global delivery_cursor, active_delivery
-    #MAG     if box_row is not None:
-    #MAG         return next_bay_in_row(box_row)
+    if box_row is not None:
+        return next_bay_in_row(box_row)
     total_cells = len(storage) * len(storage[0])
 
-    print("[DELIVERY] Searching for an empty bay")
+    #print("[DELIVERY] Searching for an empty bay")
 
     for offset in range(total_cells):
         cell = (delivery_cursor + offset) % total_cells
@@ -1069,15 +1069,15 @@ def next_delivery_bay():
 
             delivery_cursor = (cell + 1) % total_cells
 
-            print(
-                "[DELIVERY] Selected node:", node,
-                "| Row:", depot_index,
-                "| Column:", storage_index
-            )
+            #print(
+            #     "[DELIVERY] Selected node:", node,
+            #     "| Row:", depot_index,
+            #     "| Column:", storage_index
+            # )
             return node
 
     active_delivery = None
-    print("[DELIVERY ERROR] All bays are full")
+    #print("[DELIVERY ERROR] All bays are full")
     return None
 
 
@@ -1085,15 +1085,15 @@ def delivery_completed():
     global active_delivery
 
     if active_delivery is None:
-        print("[DELIVERY WARNING] No active delivery")
+        #print("[DELIVERY WARNING] No active delivery")
         return False
 
     depot_index, storage_index, node = active_delivery
     storage[depot_index][storage_index] = 1
     active_delivery = None
 
-    print("[DELIVERY] Completed at node:", node)
-    print("[DELIVERY] Storage:", storage)
+    #print("[DELIVERY] Completed at node:", node)
+    #print("[DELIVERY] Storage:", storage)
     return True
 
 
@@ -1109,11 +1109,11 @@ def update_state_machine():
     elif state == "to home":
         state = "to depot"
 
-    print("[STATE]", old_state, "->", state)
+    #print("[STATE]", old_state, "->", state)
 
 
 def pick_target():
-    print("[TARGET] Picking target for state:", state)
+    #print("[TARGET] Picking target for state:", state)
 
     if state == "to depot":
         return next_depot()
@@ -1122,10 +1122,10 @@ def pick_target():
         return next_delivery_bay()
 
     if state == "to home":
-        print("[TARGET] Home node: 0")
+        #print("[TARGET] Home node: 0")
         return 0
 
-    print("[TARGET ERROR] Unknown state:", state)
+    #print("[TARGET ERROR] Unknown state:", state)
     return None
 
 
@@ -1135,7 +1135,7 @@ def pick_target():
 def arrive_at_target():
     global target
 
-    print("[ARRIVAL] Reached target:", target, "| State:", state)
+    #print("[ARRIVAL] Reached target:", target, "| State:", state)
 
     if state == "to depot":
         stop_and_wait()
@@ -1147,13 +1147,13 @@ def arrive_at_target():
         # Release the box here.
         delivery_completed()
 
-    elif state == "to home":
-        print("[HOME] Returned to start node")
+    #elif state == "to home":
+        #print("[HOME] Returned to start node")
 
     update_state_machine()
     target = pick_target()
 
-    print("[TARGET] New target:", target)
+    #print("[TARGET] New target:", target)
 
 
 def halt(reason):
@@ -1163,7 +1163,7 @@ def halt(reason):
     right_motor.off()
     halted = True
 
-    print("[HALT]", reason)
+    #print("[HALT]", reason)
 
 
 def perform_turn(turn):
@@ -1173,7 +1173,7 @@ def perform_turn(turn):
         halt("Invalid turn decision: " + str(turn))
         return
 
-    print("[MOVEMENT DECISION] Executing:", names[turn])
+    #print("[MOVEMENT DECISION] Executing:", names[turn])
 
     if turn == 0:
         move_forward(left_motor, right_motor, 0.1)
@@ -1187,16 +1187,16 @@ def perform_turn(turn):
 def collection_detour():
     global grab, box_present, filled_bay
     global need_pick, imminent_next_node
-    print('attempt to collect')
-#MAG     global box_polarity, box_row
+    #print('attempt to collect')
+    global box_polarity, box_row
     junction_node = prev_node            # the junction we came from (2), not the depot (3)
-#MAG     box_polarity = read_box_polarity()
+    box_polarity = read_box_polarity()
     move_forward(left_motor, right_motor, 0.2)
     left_motor.off()
     right_motor.off()
     scan_grab()
-#MAG     box_row = choose_bay_row(box_polarity, curr_node)   # curr_node is the depot here
-#MAG     set_box_leds(box_polarity)                          # LED on while carrying
+    box_row = choose_bay_row(box_polarity, curr_node)   # curr_node is the depot here
+    set_box_leds(box_polarity)                          # LED on while carrying
     arrive_at_target()                   # stop 2 s at the depot, record it, state -> delivery, pick bay
 
     grab = True
@@ -1226,24 +1226,24 @@ def junction_handling():
         sleep(1)
         collection_detour()
         return
-    print(
-        "\n[NODE] Current:", curr_node,
-        "| Previous:", prev_node,
-        "| State:", state
-    )
+    #print(
+    #     "\n[NODE] Current:", curr_node,
+    #     "| Previous:", prev_node,
+    #     "| State:", state
+    # )
 
     if need_pick:
         target = pick_target()
         need_pick = False
 
-    print("[NAVIGATION] Target:", target)
+    #print("[NAVIGATION] Target:", target)
 
     if target is None:
         halt("No target available; delivery bays may be full")
         return
 
     if curr_node == target:
-        print("[NAVIGATION] Target reached")
+        #print("[NAVIGATION] Target reached")
         arrive_at_target()
 
     if target is None:
@@ -1261,10 +1261,10 @@ def junction_handling():
 
     imminent_next_node = following
 
-    print(
-        "[NAVIGATION] Planned edge:",
-        curr_node, "->", imminent_next_node
-    )
+    #print(
+    #     "[NAVIGATION] Planned edge:",
+    #     curr_node, "->", imminent_next_node
+    # )
 
     try:
         turn = turn_needed(
@@ -1355,7 +1355,7 @@ def line_follow_until_return_t():
             box_reads = 0
             bay_armed = True
 
-            print("[DELIVERY] Return junction detected")
+            #print("[DELIVERY] Return junction detected")
             return True
 
         # Follow the line using the existing sensor behaviour.
@@ -1394,11 +1394,11 @@ def line_follow_until_return_t():
 # ======================================================================
 def delivery_detour(bay_node, return_node):
     global need_pick, imminent_next_node, grab, box_present, filled_bay
-    #MAG     global box_polarity, box_row
+    global box_polarity, box_row
     scan_drop()
-    #MAG     set_box_leds(None)
-    #MAG     box_polarity = None
-    #MAG     box_row = None
+    set_box_leds(None)
+    box_polarity = None
+    box_row = None
     arrive_at_target()   # 2 s stop, record delivery, state -> to home, target -> 0
     u_turn(left_motor, right_motor)
     if not line_follow_until_return_t():
@@ -1432,7 +1432,7 @@ def line_follow():
 
         # Only log unusual sensor patterns to avoid flooding the console.
         #if on_junction or on_box:
-            # print(
+            # #print(
             #     "[SENSOR EVENT] R:", right_value,
             #     "L:", left_value,
             #     "F:", front_value,
@@ -1454,8 +1454,8 @@ def line_follow():
             box_reads = 0
 
         if clear_reads >= JUNCTION_CLEAR:
-            if not junction_armed or not box_armed:
-                print("[SENSOR] Junction cleared; rearming detectors")
+            #if not junction_armed or not box_armed:
+                #print("[SENSOR] Junction cleared; rearming detectors")
 
             junction_armed = True
             box_armed = True
@@ -1492,10 +1492,10 @@ def line_follow():
                 junction_armed = False
                 box_armed = False
 
-                print(
-                    "[EVENT] Junction confirmed after",
-                    junction_reads, "reads"
-                )
+                #print(
+                #     "[EVENT] Junction confirmed after",
+                #     junction_reads, "reads"
+                # )
                 return True
 
             move_forward(left_motor, right_motor, 0.001)
@@ -1505,10 +1505,10 @@ def line_follow():
                 box_armed = False
                 junction_armed = False
 
-                print(
-                    "[EVENT] Box/T pattern confirmed after",
-                    box_reads, "reads"
-                )
+                #print(
+                #     "[EVENT] Box/T pattern confirmed after",
+                #     box_reads, "reads"
+                # )
                 return True
 
             move_forward(left_motor, right_motor, 0.001)
@@ -1576,7 +1576,7 @@ def stop_amber_flash():
 #DIST             _dist_sensor.start()
 #DIST         return _dist_sensor.read()
 #DIST     except Exception as error:
-#DIST         print("[DIST] Sensor error, checks disabled:", error)
+#DIST         #print("[DIST] Sensor error, checks disabled:", error)
 #DIST         _dist_failed = True
 #DIST         return None
 #DIST #
@@ -1589,11 +1589,11 @@ def stop_amber_flash():
 #DIST             readings.append(d)
 #DIST         sleep_ms(10)
 #DIST     if not readings:
-#DIST         print("[DIST] No valid reading for", label)
+#DIST         #print("[DIST] No valid reading for", label)
 #DIST         return None
 #DIST     readings.sort()
 #DIST     d = readings[len(readings) // 2]
-#DIST     print("[DIST]", label, "median:", d, "mm (limit", limit, "mm)")
+#DIST     #print("[DIST]", label, "median:", d, "mm (limit", limit, "mm)")
 #DIST     return d <= limit
 #DIST #
 #DIST def depot_skipped():
@@ -1602,7 +1602,7 @@ def stop_amber_flash():
 #DIST     i = DEPOT_NODES.index(curr_node)
 #DIST     depot_empty[i] = True
 #DIST     current_depot = (i + 1) % len(DEPOT_NODES)
-#DIST     print("[DEPOT] Empty at node", curr_node, "- flagged empty")
+#DIST     #print("[DEPOT] Empty at node", curr_node, "- flagged empty")
 #DIST #
 #DIST def bay_marked_full():
 #DIST     """Bay already held an item: mark it full so it is never chosen again."""
@@ -1611,7 +1611,7 @@ def stop_amber_flash():
 #DIST         row, col, node = active_delivery
 #DIST         storage[row][col] = 1
 #DIST         active_delivery = None
-#DIST         print("[DELIVERY] Bay", node, "occupied - marked full")
+#DIST         #print("[DELIVERY] Bay", node, "occupied - marked full")
 #DIST #
 #DIST def next_depot():
 #DIST     """Next depot not flagged empty, starting at current_depot. None if every depot is empty."""
@@ -1620,9 +1620,9 @@ def stop_amber_flash():
 #DIST         i = (current_depot + k) % len(DEPOT_NODES)
 #DIST         if not depot_empty[i]:
 #DIST             current_depot = i
-#DIST             print("[TARGET] Next depot:", DEPOT_NODES[i])
+#DIST             #print("[TARGET] Next depot:", DEPOT_NODES[i])
 #DIST             return DEPOT_NODES[i]
-#DIST     print("[TARGET] Every depot is flagged empty")
+#DIST     #print("[TARGET] Every depot is flagged empty")
 #DIST     return None
 #DIST #
 #DIST def scan_grab():
@@ -1630,16 +1630,16 @@ def stop_amber_flash():
 #DIST     global box_polarity
 #DIST     arm_down()
 #DIST     grab_out60()                                    # arms wide open
-#DIST     print('Scanning for box')
+#DIST     #print('Scanning for box')
 #DIST     line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
 #DIST     right_motor.off()
 #DIST     left_motor.off()
 #DIST     if box_in_range("depot", DIST_DEPOT_MM) is False:   # None (sensor error) carries on and grabs, as before
-#DIST         print("[DIST] No box at depot - skipping pickup")
+#DIST         #print("[DIST] No box at depot - skipping pickup")
 #DIST         return False
 #DIST     if USE_MAGNET:
 #DIST         box_polarity = read_box_polarity()          # magnet scan only once a box is confirmed
-#DIST     print('grab code')
+#DIST     #print('grab code')
 #DIST     sleep(3)
 #DIST     arm_up90()
 #DIST     grab_out60()
@@ -1654,14 +1654,14 @@ def stop_amber_flash():
 #DIST #
 #DIST def scan_drop():
 #DIST     """Returns True if the drop was made, False if the bay already holds an item (nothing dropped)."""
-#DIST     print('Scanning for empty space')
+#DIST     #print('Scanning for empty space')
 #DIST     line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
 #DIST     right_motor.off()
 #DIST     left_motor.off()
 #DIST     if box_in_range("bay", DIST_BAY_MM) is True:       # None (sensor error) carries on and drops, as before
-#DIST         print("[DIST] Bay already occupied - aborting drop")
+#DIST         #print("[DIST] Bay already occupied - aborting drop")
 #DIST         return False
-#DIST     print('grab code')
+#DIST     #print('grab code')
 #DIST     sleep(1)
 #DIST     grab_out30()
 #DIST     sleep(0.5)
@@ -1672,7 +1672,7 @@ def stop_amber_flash():
 #DIST def collection_detour():
 #DIST     global grab, box_present, filled_bay
 #DIST     global need_pick, imminent_next_node, target, box_row
-#DIST     print('attempt to collect')
+#DIST     #print('attempt to collect')
 #DIST     junction_node = prev_node                       # the junction we came from
 #DIST     move_forward(left_motor, right_motor, 0.2)
 #DIST     left_motor.off()
@@ -1729,7 +1729,7 @@ def stop_amber_flash():
 def main():
     global halted
 
-    print("[NAVIGATION] Waiting for initial board event")
+    #print("[NAVIGATION] Waiting for initial board event")
 
     button_on = False
     arm_up90()
@@ -1749,7 +1749,7 @@ def main():
                 start_amber_flash()
             else:
                 stop_amber_flash()
-            print("[BUTTON] State:", "ON" if button_on else "OFF")
+            #print("[BUTTON] State:", "ON" if button_on else "OFF")
             #start_amber_flash()
 
         #if button_on:
@@ -1764,7 +1764,7 @@ def main():
 
     left_motor.off()
     right_motor.off()
-    print("[NAVIGATION] Stopped")
+    #print("[NAVIGATION] Stopped")
 
 if __name__ == "__main__":
     try:
@@ -1772,5 +1772,5 @@ if __name__ == "__main__":
     except Exception as error:
         left_motor.off()
         right_motor.off()
-        print("[ERROR]", error)
+        #print("[ERROR]", error)
         raise
