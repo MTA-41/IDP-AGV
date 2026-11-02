@@ -800,7 +800,7 @@ def scan_drop():
     #grab_in()
     #print('Scanning for empty space')
     scan = True
-    line_follow_for_ms(drop_follow_ms)
+    line_follow_for_ms(drop_follow_ms())
 
 
 ### DISTANCE TO BOX ###
