@@ -1528,7 +1528,8 @@ def _flash_amber(timer):
     amber.value(not amber.value())         # keep this tiny: it runs in an interrupt
 
 def start_amber_flash():
-    amber_timer.init(period=500, mode=Timer.PERIODIC, callback=_flash_amber)   # 500 ms = 1 Hz
+    while curr_node != 0:
+        amber_timer.init(period=500, mode=Timer.PERIODIC, callback=_flash_amber)   # 500 ms = 1 Hz
 
 def stop_amber_flash():
     amber_timer.deinit()
