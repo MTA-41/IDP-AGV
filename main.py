@@ -8,7 +8,7 @@ import ustruct
 class DRV5055:
     """Read the analogue output of a DRV5055 on a Raspberry Pi Pico ADC pin."""
 
-    def __init__(self, pin=26, zero_field=31600, deadband=1000): # 41600
+    def __init__(self, pin=26, zero_field=0, deadband=1000): # 41600
         # GP26 is ADC0 on the Pico. Change pin to 27 or 28 if wired to ADC1/ADC2.
         self.output = ADC(Pin(pin))
         # The DRV5055 output is approximately half its supply with no magnetic
@@ -645,7 +645,7 @@ def rotateacw90(motor_left, motor_right, duration=0.9):
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.7):
+def rotatecw90(motor_left, motor_right, duration=0.8):
     global current_direction
     current_direction += 1
     current_direction = current_direction % 4
