@@ -8,7 +8,7 @@ import ustruct
 class DRV5055:
     """Read the analogue output of a DRV5055 on a Raspberry Pi Pico ADC pin."""
 
-    def __init__(self, pin=26, zero_field=41600, deadband=1000):
+    def __init__(self, pin=26, zero_field=31600, deadband=1000): # 41600
         # GP26 is ADC0 on the Pico. Change pin to 27 or 28 if wired to ADC1/ADC2.
         self.output = ADC(Pin(pin))
         # The DRV5055 output is approximately half its supply with no magnetic
@@ -651,6 +651,7 @@ def rotatecw90(motor_left, motor_right, duration=0.7):
     current_direction = current_direction % 4
     motor_right.off()
     motor_left.off()
+    print("moving forward")
     move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
@@ -674,7 +675,7 @@ def u_turn(motor_left, motor_right):
         ##print('rl')
     motor_right.Reverse()
         ##print('rr')
-    sleep(1.7)
+    sleep(1.5)
     #print("[MOVE] U-turn completed")
 
 
@@ -800,7 +801,7 @@ def scan_drop():
     #grab_in()
     #print('Scanning for empty space')
     scan = True
-    line_follow_for_ms(drop_follow_ms)
+    line_follow_for_ms(drop_follow_ms())
 
 
 ### DISTANCE TO BOX ###
@@ -1748,17 +1749,18 @@ def main():
     
     while not halted:
 
-        if button.was_clicked():
-            button_on = button.is_on()
-            if button_on:
-                start_amber_flash()
-            else:
-                stop_amber_flash()
+        # if button.was_clicked():
+        #     button_on = button.is_on()
+        # if curr_node != 0:
+        #     start_amber_flash()
+        # else:
+        #     stop_amber_flash()
             #print("[BUTTON] State:", "ON" if button_on else "OFF")
-            #start_amber_flash()
+        #start_amber_flash()
 
         #if button_on:
         event_detected = line_follow()
+        #start_amber_flash()
 
         if event_detected:
             junction_handling()
