@@ -541,8 +541,8 @@ forward, backward, left, right = (
 
 SCAN_GRAB_FOLLOW_MS = 750
 STOP_SECONDS = 2
-SCAN_DROP_FOLLOW_MS = 3200
-SCAN_DROP_FOLLOW_TOP_MS = 2400
+SCAN_DROP_FOLLOW_MS = 2550
+SCAN_DROP_FOLLOW_TOP_MS = 1600
 JUNCTION_CONFIRM = 3
 JUNCTION_CLEAR = 20
 BOX_CONFIRM = 3
@@ -644,8 +644,13 @@ def rotateacw90(motor_left, motor_right, duration=0.9):
     sleep(duration)                 # CHANGED: the rotation never waited, so it never turned
     motor_right.off()
     motor_left.off()
+    sleep(0.5)
+    print("moving backward")
+    move_back(motor_left, motor_right, 0.4)
+    motor_right.off()
+    motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.8):
+def rotatecw90(motor_left, motor_right, duration=0.7):
     global current_direction
     current_direction += 1
     current_direction = current_direction % 4
@@ -661,6 +666,11 @@ def rotatecw90(motor_left, motor_right, duration=0.8):
     motor_right.Reverse()
     ##print('rr')
     sleep(duration)                 # CHANGED: same fix as above
+    motor_right.off()
+    motor_left.off()
+    sleep(0.5)
+    print("moving backward")
+    move_back(motor_left, motor_right, 0.4)
     motor_right.off()
     motor_left.off()
 
@@ -700,13 +710,13 @@ def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor)
 def arm_down():
 
     ##print("Move to 0°")
-    servo1.set_angle(30)
+    servo1.set_angle(25)
 
  
 def arm_up30():
 
     ##print("Move to 30°")
-    servo1.set_angle(15)
+    servo1.set_angle(5)
 
 
 def arm_up90():
@@ -722,12 +732,12 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     ##print("Grab Move to 0°")
-    servo_grab.set_angle(85)
+    servo_grab.set_angle(90)
 
 def grab_out30():
 
     ##print("Grab Move to 30°")
-    servo_grab.set_angle(60)
+    servo_grab.set_angle(70)
 
 def grab_out60():
 
@@ -739,7 +749,7 @@ def grab_out60():
 
 def line_follow_step():
     right, left, front, back = get_light_values(front_light_sensor, back_light_sensor, left_light_sensor, right_light_sensor)
-     
+    #start_amber_flash()
     # ----- driving -----
     if right == 0 and left == 0 and front == 1:
         ##print('f')
@@ -1196,6 +1206,7 @@ def collection_detour():
     global box_polarity, box_row
     junction_node = prev_node            # the junction we came from (2), not the depot (3)
     box_polarity = read_box_polarity()
+    grab_out60()
     move_forward(left_motor, right_motor, 0.2)
     left_motor.off()
     right_motor.off()
@@ -1398,8 +1409,13 @@ def line_follow_until_return_t():
 # LINE FOLLOWING AND EVENT DETECTION
 # ======================================================================
 def delivery_detour(bay_node, return_node):
-    global need_pick, imminent_next_node, grab, box_present, filled_bay
+    global need_pick, imminent_next_node, grab, box_present, filled_bay, current_direction
     global box_polarity, box_row
+    if box_row in (1,2):
+        current_direction -= 1
+        rotatecw90(left_motor, right_motor, 0.15)
+        left_motor.off()
+        right_motor.off()
     scan_drop()
     set_box_leds(None)
     box_polarity = None
@@ -1533,8 +1549,8 @@ def _flash_amber(timer):
     amber.value(not amber.value())         # keep this tiny: it runs in an interrupt
 
 def start_amber_flash():
-    while curr_node != 0:
-        amber_timer.init(period=500, mode=Timer.PERIODIC, callback=_flash_amber)   # 500 ms = 1 Hz
+    #while curr_node != 0:
+    amber_timer.init(period=500, mode=Timer.PERIODIC, callback=_flash_amber)   # 500 ms = 1 Hz
 
 def stop_amber_flash():
     amber_timer.deinit()
@@ -1734,7 +1750,7 @@ def stop_amber_flash():
 # ======================================================================
 def main():
     global halted
-
+    sleep(3)
     #print("[NAVIGATION] Waiting for initial board event")
 
     button_on = False
@@ -1760,7 +1776,7 @@ def main():
 
         #if button_on:
         event_detected = line_follow()
-        #start_amber_flash()
+        start_amber_flash()
 
         if event_detected:
             junction_handling()
