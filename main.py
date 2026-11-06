@@ -1,9 +1,11 @@
 from machine import Pin, PWM, I2C, ADC, Timer
 from micropython import const
 from time import *
-from collections import deque
-import utime
+from collections import deque§rt utime
 import ustruct
+
+#all print statements removed, they cause robot to crash 
+#when running not plugged in, add them back in for debugging
 
 class DRV5055:
     """Read the analogue output of a DRV5055 on a Raspberry Pi Pico ADC pin."""
@@ -39,9 +41,8 @@ def get_polarity(sensor):
         sleep(2)
 
 
-# ======================================================================
 # MOTOR CLASS
-# ======================================================================
+
 class Motor:
     def __init__(self, dirPin, PWMPin):
         self.mDir = Pin(dirPin, Pin.OUT)
@@ -61,9 +62,7 @@ class Motor:
         self.pwm.duty_u16(int(65535 * speed / 100))
 
 
-# ======================================================================
 # SERVO CLASS
-# ======================================================================
 
 class Servo():
     # Common settings for 270° servos:
@@ -102,30 +101,7 @@ class Servo():
        duty = int(Servo.MIN_DUTY + (angle / 270) * (Servo.MAX_DUTY - Servo.MIN_DUTY))
        self.servo.duty_u16(duty)
 
-
-
-# ======================================================================
-# VL53L0X CONSTANTS AND CLASS
-# Retained from your original code.
-# Navigation does not use this driver.
-# ======================================================================
-_IO_TIMEOUT = 1000
-_SYSRANGE_START = const(0x00)
-_EXTSUP_HV = const(0x89)
-_MSRC_CONFIG = const(0x60)
-_FINAL_RATE_RTN_LIMIT = const(0x44)
-_SYSTEM_SEQUENCE = const(0x01)
-_SPAD_REF_START = const(0x4f)
-_SPAD_ENABLES = const(0xb0)
-_REF_EN_START_SELECT = const(0xb6)
-_SPAD_NUM_REQUESTED = const(0x4e)
-_INTERRUPT_GPIO = const(0x0a)
-_INTERRUPT_CLEAR = const(0x0b)
-_GPIO_MUX_ACTIVE_HIGH = const(0x84)
-_RESULT_INTERRUPT_STATUS = const(0x13)
-_RESULT_RANGE_STATUS = const(0x14)
-_OSC_CALIBRATE = const(0xf8)
-_MEASURE_PERIOD = const(0x04)
+#Variables to be used for distance sensor, not implemented
 
 SYSRANGE_START = 0x00
 SYSTEM_SEQUENCE_CONFIG = 0x01
@@ -149,297 +125,6 @@ ALGO_PHASECAL_CONFIG_TIMEOUT = 0x30
 
 class TimeoutError(RuntimeError):
     pass
-
-
-class VL53L0X:
-    def __init__(self, i2c, address=0x29):
-        self.i2c = i2c
-        self.address = address
-        self._started = False
-        self._stop_variable = 0
-        self.measurement_timing_budget_us = 20000
-        self.enables = {
-            "tcc": 0, "dss": 0, "msrc": 0,
-            "pre_range": 0, "final_range": 0
-        }
-        self.timeouts = {
-            "pre_range_vcsel_period_pclks": 0,
-            "msrc_dss_tcc_mclks": 0,
-            "msrc_dss_tcc_us": 0,
-            "pre_range_mclks": 0,
-            "pre_range_us": 0,
-            "final_range_vcsel_period_pclks": 0,
-            "final_range_mclks": 0,
-            "final_range_us": 0
-        }
-        self.vcsel_period_type = [
-            "VcselPeriodPreRange",
-            "VcselPeriodFinalRange"
-        ]
-        self.init()
-
-    def _registers(self, register, values=None, struct="B"):
-        if values is None:
-            size = ustruct.calcsize(struct)
-            data = self.i2c.readfrom_mem(self.address, register, size)
-            return ustruct.unpack(struct, data)
-
-        data = ustruct.pack(struct, *values)
-        self.i2c.writeto_mem(self.address, register, data)
-
-    def _register(self, register, value=None, struct="B"):
-        if value is None:
-            return self._registers(register, struct=struct)[0]
-        self._registers(register, (value,), struct=struct)
-
-    def _flag(self, register=0x00, bit=0, value=None):
-        data = self._register(register)
-        mask = 1 << bit
-
-        if value is None:
-            return bool(data & mask)
-
-        if value:
-            data |= mask
-        else:
-            data &= ~mask
-
-        self._register(register, data)
-
-    def _config(self, *config):
-        for register, value in config:
-            self._register(register, value)
-
-    def init(self, power2v8=True):
-        self._flag(_EXTSUP_HV, 0, power2v8)
-
-        self._config(
-            (0x88, 0x00),
-            (0x80, 0x01),
-            (0xff, 0x01),
-            (0x00, 0x00)
-        )
-        self._stop_variable = self._register(0x91)
-        self._config(
-            (0x00, 0x01),
-            (0xff, 0x00),
-            (0x80, 0x00)
-        )
-
-        self._flag(_MSRC_CONFIG, 1, True)
-        self._flag(_MSRC_CONFIG, 4, True)
-        self._register(
-            _FINAL_RATE_RTN_LIMIT,
-            int(0.1 * (1 << 7)),
-            struct=">H"
-        )
-        self._register(_SYSTEM_SEQUENCE, 0xff)
-
-        spad_count, is_aperture = self._spad_info()
-        spad_map = bytearray(
-            self._registers(_SPAD_ENABLES, struct="6B")
-        )
-
-        self._config(
-            (0xff, 0x01),
-            (_SPAD_REF_START, 0x00),
-            (_SPAD_NUM_REQUESTED, 0x2c),
-            (0xff, 0x00),
-            (_REF_EN_START_SELECT, 0xb4)
-        )
-
-        spads_enabled = 0
-        for i in range(48):
-            if (
-                (i < 12 and is_aperture)
-                or spads_enabled >= spad_count
-            ):
-                spad_map[i // 8] &= ~(1 << (i % 8))
-            elif spad_map[i // 8] & (1 << (i % 8)):
-                spads_enabled += 1
-
-        self._registers(_SPAD_ENABLES, spad_map, struct="6B")
-
-        self._config(
-            (0xff, 0x01), (0x00, 0x00),
-            (0xff, 0x00), (0x09, 0x00),
-            (0x10, 0x00), (0x11, 0x00),
-            (0x24, 0x01), (0x25, 0xFF),
-            (0x75, 0x00), (0xFF, 0x01),
-            (0x4E, 0x2C), (0x48, 0x00),
-            (0x30, 0x20), (0xFF, 0x00),
-            (0x30, 0x09), (0x54, 0x00),
-            (0x31, 0x04), (0x32, 0x03),
-            (0x40, 0x83), (0x46, 0x25),
-            (0x60, 0x00), (0x27, 0x00),
-            (0x50, 0x06), (0x51, 0x00),
-            (0x52, 0x96), (0x56, 0x08),
-            (0x57, 0x30), (0x61, 0x00),
-            (0x62, 0x00), (0x64, 0x00),
-            (0x65, 0x00), (0x66, 0xA0),
-            (0xFF, 0x01), (0x22, 0x32),
-            (0x47, 0x14), (0x49, 0xFF),
-            (0x4A, 0x00), (0xFF, 0x00),
-            (0x7A, 0x0A), (0x7B, 0x00),
-            (0x78, 0x21), (0xFF, 0x01),
-            (0x23, 0x34), (0x42, 0x00),
-            (0x44, 0xFF), (0x45, 0x26),
-            (0x46, 0x05), (0x40, 0x40),
-            (0x0E, 0x06), (0x20, 0x1A),
-            (0x43, 0x40), (0xFF, 0x00),
-            (0x34, 0x03), (0x35, 0x44),
-            (0xFF, 0x01), (0x31, 0x04),
-            (0x4B, 0x09), (0x4C, 0x05),
-            (0x4D, 0x04), (0xFF, 0x00),
-            (0x44, 0x00), (0x45, 0x20),
-            (0x47, 0x08), (0x48, 0x28),
-            (0x67, 0x00), (0x70, 0x04),
-            (0x71, 0x01), (0x72, 0xFE),
-            (0x76, 0x00), (0x77, 0x00),
-            (0xFF, 0x01), (0x0D, 0x01),
-            (0xFF, 0x00), (0x80, 0x01),
-            (0x01, 0xF8), (0xFF, 0x01),
-            (0x8E, 0x01), (0x00, 0x01),
-            (0xFF, 0x00), (0x80, 0x00)
-        )
-
-        self._register(_INTERRUPT_GPIO, 0x04)
-        self._flag(_GPIO_MUX_ACTIVE_HIGH, 4, False)
-        self._register(_INTERRUPT_CLEAR, 0x01)
-        self._register(_SYSTEM_SEQUENCE, 0x01)
-        self._calibrate(0x40)
-        self._register(_SYSTEM_SEQUENCE, 0x02)
-        self._calibrate(0x00)
-        self._register(_SYSTEM_SEQUENCE, 0xe8)
-
-    def _spad_info(self):
-        self._config(
-            (0x80, 0x01), (0xff, 0x01),
-            (0x00, 0x00), (0xff, 0x06)
-        )
-        self._flag(0x83, 3, True)
-        self._config(
-            (0xff, 0x07), (0x81, 0x01),
-            (0x80, 0x01), (0x94, 0x6b),
-            (0x83, 0x00)
-        )
-
-        for _ in range(_IO_TIMEOUT):
-            if self._register(0x83):
-                break
-            utime.sleep_ms(1)
-        else:
-            raise TimeoutError("SPAD information timeout")
-
-        self._register(0x83, 0x01)
-        value = self._register(0x92)
-        self._config(
-            (0x81, 0x00), (0xff, 0x06)
-        )
-        self._flag(0x83, 3, False)
-        self._config(
-            (0xff, 0x01), (0x00, 0x01),
-            (0xff, 0x00), (0x80, 0x00)
-        )
-
-        return value & 0x7f, bool(value & 0x80)
-
-    def _calibrate(self, vhv_init_byte):
-        self._register(_SYSRANGE_START, 0x01 | vhv_init_byte)
-
-        for _ in range(_IO_TIMEOUT):
-            if self._register(_RESULT_INTERRUPT_STATUS) & 0x07:
-                break
-            utime.sleep_ms(1)
-        else:
-            raise TimeoutError("Calibration timeout")
-
-        self._register(_INTERRUPT_CLEAR, 0x01)
-        self._register(_SYSRANGE_START, 0x00)
-
-    def start(self, period=0):
-        self._config(
-            (0x80, 0x01), (0xFF, 0x01),
-            (0x00, 0x00), (0x91, self._stop_variable),
-            (0x00, 0x01), (0xFF, 0x00),
-            (0x80, 0x00)
-        )
-
-        if period:
-            oscillator = self._register(_OSC_CALIBRATE, struct=">H")
-            if oscillator:
-                period *= oscillator
-            self._register(_MEASURE_PERIOD, period, struct=">H")
-            self._register(_SYSRANGE_START, 0x04)
-        else:
-            self._register(_SYSRANGE_START, 0x02)
-
-        self._started = True
-
-    def stop(self):
-        self._register(_SYSRANGE_START, 0x01)
-        self._config(
-            (0xFF, 0x01), (0x00, 0x00),
-            (0x91, self._stop_variable), (0x00, 0x01),
-            (0xFF, 0x00)
-        )
-        self._started = False
-
-    def read(self):
-        if not self._started:
-            self.start()
-
-        for _ in range(_IO_TIMEOUT):
-            if self._register(_RESULT_INTERRUPT_STATUS) & 0x07:
-                break
-            utime.sleep_ms(1)
-        else:
-            raise TimeoutError("Range read timeout")
-
-        value = self._register(_RESULT_RANGE_STATUS + 10, struct=">H")
-        self._register(_INTERRUPT_CLEAR, 0x01)
-        return value
-
-    def decode_Vcsel_period(self, reg_val):
-        return (reg_val + 1) << 1
-
-    def encode_Vcsel_period(self, period_pclks):
-        return (period_pclks >> 1) - 1
-
-    def set_Vcsel_pulse_period(self, period_type, period_pclks):
-        vcsel_period_reg = self.encode_Vcsel_period(period_pclks)
-
-        if period_type == self.vcsel_period_type[0]:
-            if period_pclks not in (12, 14, 16, 18):
-                return False
-
-            phase_high = {
-                12: 0x18, 14: 0x30,
-                16: 0x40, 18: 0x50
-            }[period_pclks]
-
-            self._register(PRE_RANGE_CONFIG_VALID_PHASE_HIGH, phase_high)
-            self._register(PRE_RANGE_CONFIG_VALID_PHASE_LOW, 0x08)
-            self._register(PRE_RANGE_CONFIG_VCSEL_PERIOD, vcsel_period_reg)
-
-        elif period_type == self.vcsel_period_type[1]:
-            if period_pclks not in (8, 10, 12, 14):
-                return False
-
-            phase_high = {
-                8: 0x10, 10: 0x28,
-                12: 0x38, 14: 0x48
-            }[period_pclks]
-
-            self._register(FINAL_RANGE_CONFIG_VALID_PHASE_HIGH, phase_high)
-            self._register(FINAL_RANGE_CONFIG_VALID_PHASE_LOW, 0x08)
-            self._register(FINAL_RANGE_CONFIG_VCSEL_PERIOD, vcsel_period_reg)
-
-        else:
-            return False
-
-        return True
-
 
 class Button:
     def __init__(self, pin=10, debounce_ms=30):
@@ -473,9 +158,8 @@ class Button:
         # Odd = ON; even = OFF
         return self.click_count % 2 == 1
     
-# ======================================================================
 # COMPONENTS
-# ======================================================================
+
 button = Button(pin=11, debounce_ms=30)
 right_light_sensor = Pin(20, Pin.IN)
 left_light_sensor = Pin(18, Pin.IN)
@@ -532,16 +216,15 @@ def next_bay_in_row(row):
     #print("[DELIVERY ERROR] Row", row, "is full")
     return None
 
-# ======================================================================
 # SETTINGS AND STATE
-# ======================================================================
+
 forward, backward, left, right = (
     "forward", "backward", "left", "right"
 )
 
 SCAN_GRAB_FOLLOW_MS = 750
 STOP_SECONDS = 2
-SCAN_DROP_FOLLOW_MS = 2550
+SCAN_DROP_FOLLOW_MS = 2300
 SCAN_DROP_FOLLOW_TOP_MS = 1600
 JUNCTION_CONFIRM = 3
 JUNCTION_CLEAR = 20
@@ -596,9 +279,10 @@ def drop_follow_ms():
     if active_delivery is not None and active_delivery[0] >= 2:
         return SCAN_DROP_FOLLOW_TOP_MS
     return SCAN_DROP_FOLLOW_MS
-# ======================================================================
+
+
 # MOTOR MOVEMENT FUNCTIONS
-# ======================================================================
+
 def move_forward(motor_left, motor_right, duration):
     ##print("[MOVE] Forward | duration:", duration)
     motor_left.Forward()
@@ -627,13 +311,14 @@ def move_back(motor_left, motor_right, duration):
     sleep(duration)
 
 
-def rotateacw90(motor_left, motor_right, duration=0.9):
+def rotateacw90(motor_left, motor_right, duration=0.86, full_turn = True):
     global current_direction
     current_direction -= 1
     current_direction = current_direction % 4
     motor_right.off()
     motor_left.off()
-    move_forward(motor_left, motor_right, 0.6)
+    if full_turn:
+        move_forward(motor_left, motor_right, 0.6)
     motor_left.off()
     motor_right.off()
     sleep(2)
@@ -641,23 +326,25 @@ def rotateacw90(motor_left, motor_right, duration=0.9):
     ##print('rr')
     motor_left.Reverse()
     ##print('rl')
-    sleep(duration)                 # CHANGED: the rotation never waited, so it never turned
+    sleep(duration)          
     motor_right.off()
     motor_left.off()
     sleep(0.5)
     print("moving backward")
-    move_back(motor_left, motor_right, 0.4)
+    if full_turn:
+        move_back(motor_left, motor_right, 0.4)
     motor_right.off()
     motor_left.off()
  
-def rotatecw90(motor_left, motor_right, duration=0.7):
+def rotatecw90(motor_left, motor_right, duration=0.7, full_turn = True):
     global current_direction
     current_direction += 1
     current_direction = current_direction % 4
     motor_right.off()
     motor_left.off()
     print("moving forward")
-    move_forward(motor_left, motor_right, 0.6)
+    if full_turn:
+        move_forward(motor_left, motor_right, 0.6)
     motor_right.off()
     motor_left.off()
     sleep(2)
@@ -665,12 +352,13 @@ def rotatecw90(motor_left, motor_right, duration=0.7):
     ##print('rl')
     motor_right.Reverse()
     ##print('rr')
-    sleep(duration)                 # CHANGED: same fix as above
+    sleep(duration)           
     motor_right.off()
     motor_left.off()
     sleep(0.5)
     print("moving backward")
-    move_back(motor_left, motor_right, 0.4)
+    if full_turn:
+        move_back(motor_left, motor_right, 0.4)
     motor_right.off()
     motor_left.off()
 
@@ -696,9 +384,8 @@ def stop_and_wait():
     sleep(STOP_SECONDS)
 
 
-# ======================================================================
 # SENSORS AND GRABBER
-# ======================================================================
+
 def get_light_values(forward_sensor, backward_sensor, left_sensor, right_sensor):
     return [
         right_sensor.value(),
@@ -732,7 +419,7 @@ servo_grab = Servo(Pin(15))
 def grab_in():
 
     ##print("Grab Move to 0°")
-    servo_grab.set_angle(90)
+    servo_grab.set_angle(110)
 
 def grab_out30():
 
@@ -807,6 +494,7 @@ def line_follow_for_ms(duration_ms):
     right_motor.off()
 
 def scan_drop():
+    global box_row, current_direction
     #arm_down()
     #grab_in()
     #print('Scanning for empty space')
@@ -821,6 +509,22 @@ def scan_drop():
         #line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
         right_motor.off()
         left_motor.off()
+        if box_row in (1,2):
+            current_direction -= 1
+            rotatecw90(left_motor, right_motor, 0.10, full_turn=False)
+            left_motor.off()
+            right_motor.off()
+            move_forward(left_motor, right_motor, 0.3)
+            left_motor.off()
+            right_motor.off()  
+        elif box_row in (0,3):
+            #current_direction += 1
+            #rotateacw90(left_motor, right_motor, 0.10, full_turn=False)
+            left_motor.off()
+            right_motor.off()  
+            move_forward(left_motor, right_motor, 0.15)
+            left_motor.off()
+            right_motor.off()        
         #print('grab code')
         #sleep(3)
         #arm_down()
@@ -836,30 +540,7 @@ def scan_drop():
             #line_follow_step()
 
 
-def get_distance():
-    i2c_bus = I2C(id=0, sda=Pin(8), scl=Pin(9))
-    vl53l0 = VL53L0X(i2c_bus)
-    vl53l0.start()
-    distance = vl53l0.read()
-    vl53l0.stop()
-    return distance
-
-
-def test_vl53l0x():
-    i2c_bus = I2C(id=0, sda=Pin(8), scl=Pin(9))
-    vl53l0 = VL53L0X(i2c_bus)
-
-    while True:
-        vl53l0.start()
-        for _ in range(10):
-            #print(vl53l0.read(), "mm")
-            sleep(0.5)
-        vl53l0.stop()
-
-
-# ======================================================================
-# BOARD GRAPH
-# ======================================================================
+# BOARD GRAPH, note node 54 and 55 were added later, numbering is not an error
 board_graph = {
     0:  {forward: 35, backward: None, left: 18, right: 1},
     18: {forward: None, backward: None, left: 55, right: 0},
@@ -925,9 +606,8 @@ board_graph = {
 ORDER = [forward, right, backward, left]
 current_direction = 0 #0 = forward, 1 = right, 2 = backward, 3 = left
 
-# ======================================================================
 # PATH FINDING AND TURN DECISIONS
-# ======================================================================
+
 def find_path(graph, curr_node, target):
     #print("[PATH] Searching:", curr_node, "->", target)
 
@@ -992,21 +672,19 @@ def next_direction(graph, current, target):
     return None
 
 def turn_needed(prev, curr, nxt):
-    """
-    Uses globally fixed directions and current_direction.
+    # Uses globally fixed directions and current_direction. these area bsolute
 
-    current_direction:
-    0 = forward / north
-    1 = right / east
-    2 = backward / south
-    3 = left / west
+    # current_direction:
+    # 0 = forward / north
+    # 1 = right / east
+    # 2 = backward / south
+    # 3 = left / west
 
-    Returns:
-    0 = straight
-    1 = right
-    2 = U-turn
-    3 = left
-    """
+    # Returns:
+    # 0 = straight
+    # 1 = right
+    # 2 = U-turn
+    # 3 = left
     #print(
     #     "[TURN] Current node:", curr,
     #     "| Next node:", nxt,
@@ -1044,9 +722,8 @@ def turn_needed(prev, curr, nxt):
     # )
 
     return turn
-# ======================================================================
 # DEPOT AND DELIVERY BOOKKEEPING
-# ======================================================================
+
 def next_depot():
     node = DEPOT_NODES[current_depot]
     #print("[TARGET] Next depot:", node)
@@ -1144,9 +821,8 @@ def pick_target():
     return None
 
 
-# ======================================================================
 # TARGET ARRIVAL AND HALTING
-# ======================================================================
+
 def arrive_at_target():
     global target
 
@@ -1315,7 +991,6 @@ def junction_handling():
         return
 
 def line_follow_until_return_t():
-    """Follow the line until a junction/T pattern is confirmed."""
     global junction_armed, junction_reads, clear_reads
     global box_armed, box_reads, bay_armed
 
@@ -1405,23 +1080,26 @@ def line_follow_until_return_t():
     left_motor.off()
     right_motor.off()
     return False
-# ======================================================================
+
 # LINE FOLLOWING AND EVENT DETECTION
-# ======================================================================
+
 def delivery_detour(bay_node, return_node):
     global need_pick, imminent_next_node, grab, box_present, filled_bay, current_direction
     global box_polarity, box_row
-    if box_row in (1,2):
-        current_direction -= 1
-        rotatecw90(left_motor, right_motor, 0.15)
-        left_motor.off()
-        right_motor.off()
+    #callibration fine tuning, if delivery not working, uncomment
+    # if box_row in (1,2):
+    #     current_direction -= 1
+    #     rotatecw90(left_motor, right_motor, 0.15)
+    #     left_motor.off()
+    #     right_motor.off()
     scan_drop()
     set_box_leds(None)
     box_polarity = None
     box_row = None
     arrive_at_target()   # 2 s stop, record delivery, state -> to home, target -> 0
     u_turn(left_motor, right_motor)
+    current_direction+= 1
+    rotateacw90(left_motor, right_motor, 0.07, full_turn=False)
     if not line_follow_until_return_t():
         halt("Failed to detect return junction")
         return
@@ -1451,16 +1129,6 @@ def line_follow():
 
         on_box = right_value == 1 and left_value == 1
 
-        # Only log unusual sensor patterns to avoid flooding the console.
-        #if on_junction or on_box:
-            # #print(
-            #     "[SENSOR EVENT] R:", right_value,
-            #     "L:", left_value,
-            #     "F:", front_value,
-            #     "B:", back_value,
-            #     "| Junction:", on_junction,
-            #     "| Box:", on_box
-            # )
 
         if on_junction or on_box:
             junction_reads += 1
@@ -1484,9 +1152,8 @@ def line_follow():
         if front_value == 1:
             bay_armed = True
 
-        # --------------------------------------------------------------
         # Line following
-        # --------------------------------------------------------------
+
         if (
             right_value == 0
             and left_value == 0
@@ -1556,198 +1223,9 @@ def stop_amber_flash():
     amber_timer.deinit()
     amber.value(0)
 
-#=======================================================================
-# Distance code
-#+======================================================================
-#DIST # ======================================================================
-#DIST # DISTANCE-SENSOR CHECKS  (VL53L0X on software I2C: SCL = GP17, SDA = GP22)
-#DIST # Enable: Find "#DIST " and Replace with nothing. Keep this block BELOW the
-#DIST # original functions, because it replaces them by redefining them:
-#DIST #   scan_grab, scan_drop, collection_detour, delivery_detour, next_depot
-#DIST # ======================================================================
-#DIST try:
-#DIST     from machine import SoftI2C
-#DIST except ImportError:
-#DIST     SoftI2C = None
-#DIST #
-#DIST DIST_SCL_PIN = 17
-#DIST DIST_SDA_PIN = 22
-#DIST DIST_DEPOT_MM = 40            # box counts as present at or below this distance (depot)
-#DIST DIST_BAY_MM = 40              # bay counts as occupied at or below this distance
-#DIST DIST_SAMPLES = 5              # median of this many readings
-#DIST USE_MAGNET = False            # set True once every #MAG line is uncommented
-#DIST #
-#DIST depot_empty = [False, False, False, False]     # one flag per entry in DEPOT_NODES
-#DIST _dist_sensor = None
-#DIST _dist_failed = False
-#DIST #
-#DIST def _make_i2c():
-#DIST     # GP17 is I2C0's clock but GP22 is I2C1's data, so no hardware bus can use both
-#DIST     if SoftI2C is not None:
-#DIST         return SoftI2C(scl=Pin(DIST_SCL_PIN), sda=Pin(DIST_SDA_PIN), freq=100000)
-#DIST     return I2C(-1, scl=Pin(DIST_SCL_PIN), sda=Pin(DIST_SDA_PIN), freq=100000)
-#DIST #
-#DIST def get_distance_mm():
-#DIST     """One reading in mm (about 8190 = nothing in range), or None if the sensor is unavailable."""
-#DIST     global _dist_sensor, _dist_failed
-#DIST     if _dist_failed:
-#DIST         return None
-#DIST     try:
-#DIST         if _dist_sensor is None:
-#DIST             _dist_sensor = VL53L0X(_make_i2c())
-#DIST             _dist_sensor.start()
-#DIST         return _dist_sensor.read()
-#DIST     except Exception as error:
-#DIST         #print("[DIST] Sensor error, checks disabled:", error)
-#DIST         _dist_failed = True
-#DIST         return None
-#DIST #
-#DIST def box_in_range(label, limit):
-#DIST     """True = item within limit mm, False = nothing there, None = sensor unavailable."""
-#DIST     readings = []
-#DIST     for _ in range(DIST_SAMPLES):
-#DIST         d = get_distance_mm()
-#DIST         if d is not None:
-#DIST             readings.append(d)
-#DIST         sleep_ms(10)
-#DIST     if not readings:
-#DIST         #print("[DIST] No valid reading for", label)
-#DIST         return None
-#DIST     readings.sort()
-#DIST     d = readings[len(readings) // 2]
-#DIST     #print("[DIST]", label, "median:", d, "mm (limit", limit, "mm)")
-#DIST     return d <= limit
-#DIST #
-#DIST def depot_skipped():
-#DIST     """Depot had no box: flag it empty and move the depot pointer on. No collection is recorded."""
-#DIST     global current_depot
-#DIST     i = DEPOT_NODES.index(curr_node)
-#DIST     depot_empty[i] = True
-#DIST     current_depot = (i + 1) % len(DEPOT_NODES)
-#DIST     #print("[DEPOT] Empty at node", curr_node, "- flagged empty")
-#DIST #
-#DIST def bay_marked_full():
-#DIST     """Bay already held an item: mark it full so it is never chosen again."""
-#DIST     global active_delivery
-#DIST     if active_delivery is not None:
-#DIST         row, col, node = active_delivery
-#DIST         storage[row][col] = 1
-#DIST         active_delivery = None
-#DIST         #print("[DELIVERY] Bay", node, "occupied - marked full")
-#DIST #
-#DIST def next_depot():
-#DIST     """Next depot not flagged empty, starting at current_depot. None if every depot is empty."""
-#DIST     global current_depot
-#DIST     for k in range(len(DEPOT_NODES)):
-#DIST         i = (current_depot + k) % len(DEPOT_NODES)
-#DIST         if not depot_empty[i]:
-#DIST             current_depot = i
-#DIST             #print("[TARGET] Next depot:", DEPOT_NODES[i])
-#DIST             return DEPOT_NODES[i]
-#DIST     #print("[TARGET] Every depot is flagged empty")
-#DIST     return None
-#DIST #
-#DIST def scan_grab():
-#DIST     """Returns True if a box was grabbed, False if the depot was empty."""
-#DIST     global box_polarity
-#DIST     arm_down()
-#DIST     grab_out60()                                    # arms wide open
-#DIST     #print('Scanning for box')
-#DIST     line_follow_for_ms(SCAN_GRAB_FOLLOW_MS)
-#DIST     right_motor.off()
-#DIST     left_motor.off()
-#DIST     if box_in_range("depot", DIST_DEPOT_MM) is False:   # None (sensor error) carries on and grabs, as before
-#DIST         #print("[DIST] No box at depot - skipping pickup")
-#DIST         return False
-#DIST     if USE_MAGNET:
-#DIST         box_polarity = read_box_polarity()          # magnet scan only once a box is confirmed
-#DIST     #print('grab code')
-#DIST     sleep(3)
-#DIST     arm_up90()
-#DIST     grab_out60()
-#DIST     right_motor.off()
-#DIST     left_motor.off()
-#DIST     arm_down()
-#DIST     sleep(1)
-#DIST     grab_in()
-#DIST     sleep(0.5)
-#DIST     arm_up30()
-#DIST     return True
-#DIST #
-#DIST def scan_drop():
-#DIST     """Returns True if the drop was made, False if the bay already holds an item (nothing dropped)."""
-#DIST     #print('Scanning for empty space')
-#DIST     line_follow_for_ms(SCAN_DROP_FOLLOW_MS)
-#DIST     right_motor.off()
-#DIST     left_motor.off()
-#DIST     if box_in_range("bay", DIST_BAY_MM) is True:       # None (sensor error) carries on and drops, as before
-#DIST         #print("[DIST] Bay already occupied - aborting drop")
-#DIST         return False
-#DIST     #print('grab code')
-#DIST     sleep(1)
-#DIST     grab_out30()
-#DIST     sleep(0.5)
-#DIST     move_back(left_motor, right_motor, 0.8)
-#DIST     arm_up90()
-#DIST     return True
-#DIST #
-#DIST def collection_detour():
-#DIST     global grab, box_present, filled_bay
-#DIST     global need_pick, imminent_next_node, target, box_row
-#DIST     #print('attempt to collect')
-#DIST     junction_node = prev_node                       # the junction we came from
-#DIST     move_forward(left_motor, right_motor, 0.2)
-#DIST     left_motor.off()
-#DIST     right_motor.off()
-#DIST     if scan_grab():                                 # box confirmed and picked up
-#DIST         if USE_MAGNET:
-#DIST             box_row = choose_bay_row(box_polarity, curr_node)   # curr_node is the depot here
-#DIST             set_box_leds(box_polarity)
-#DIST         arrive_at_target()                          # stop 2 s, record depot, state -> delivery, pick bay
-#DIST         grab = True
-#DIST         box_present = True
-#DIST         filled_bay = False
-#DIST         sleep(2)
-#DIST         move_forward(left_motor, right_motor, 0.8)
-#DIST     else:                                           # empty depot: state and storage untouched
-#DIST         arm_up90()
-#DIST         grab_out60()
-#DIST         depot_skipped()
-#DIST         target = pick_target()                      # state is still "to depot" -> next non-empty depot
-#DIST     u_turn(left_motor, right_motor)
-#DIST     if not line_follow_until_return_t():
-#DIST         halt("Failed to return to depot junction")
-#DIST         return
-#DIST     need_pick = False
-#DIST     imminent_next_node = junction_node
-#DIST     junction_handling()
-#DIST #
-#DIST def delivery_detour(bay_node, return_node):
-#DIST     global need_pick, imminent_next_node, target
-#DIST     global grab, box_present, filled_bay, box_polarity, box_row
-#DIST     if scan_drop():                                 # bay was free, box dropped
-#DIST         if USE_MAGNET:
-#DIST             set_box_leds(None)
-#DIST             box_polarity = None
-#DIST             box_row = None
-#DIST         arrive_at_target()                          # 2 s stop, record delivery, state -> to home, target -> 0
-#DIST         u_turn(left_motor, right_motor)
-#DIST         if not line_follow_until_return_t():
-#DIST             halt("Failed to detect return junction")
-#DIST             return
-#DIST         grab, box_present, filled_bay = False, False, True
-#DIST     else:                                           # bay occupied: abort, still carrying the box
-#DIST         bay_marked_full()
-#DIST         u_turn(left_motor, right_motor)
-#DIST         if not line_follow_until_return_t():
-#DIST             halt("Failed to detect return junction")
-#DIST             return
-#DIST         target = pick_target()                      # state is still "delivery" -> next free bay
-#DIST     need_pick = False
-#DIST     imminent_next_node = return_node
-# ======================================================================
+
 # MAIN
-# ======================================================================
+
 def main():
     global halted
     sleep(3)
@@ -1765,25 +1243,24 @@ def main():
     
     while not halted:
 
-        # if button.was_clicked():
-        #     button_on = button.is_on()
-        # if curr_node != 0:
-        #     start_amber_flash()
-        # else:
-        #     stop_amber_flash()
-            #print("[BUTTON] State:", "ON" if button_on else "OFF")
-        #start_amber_flash()
-
-        #if button_on:
-        event_detected = line_follow()
+        if button.was_clicked():
+            button_on = button.is_on()
+        if curr_node != 0:
+            start_amber_flash()
+        else:
+            stop_amber_flash()
+            print("[BUTTON] State:", "ON" if button_on else "OFF")
         start_amber_flash()
 
-        if event_detected:
-            junction_handling()
-        # else:
-        #     left_motor.off()
-        #     right_motor.off()
-        #     sleep_ms(10)
+        if button_on:
+            event_detected = line_follow()
+
+            if event_detected:
+                junction_handling()
+        else:
+            left_motor.off()
+            right_motor.off()
+            sleep_ms(10)
 
     left_motor.off()
     right_motor.off()
@@ -1797,3 +1274,4 @@ if __name__ == "__main__":
         right_motor.off()
         #print("[ERROR]", error)
         raise
+
